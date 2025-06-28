@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Adventure - Backpacking Camp Simulation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>🏔️ High Adventure</h1>
+            <div class="game-stats">
+                <div class="stat">
+                    <span class="stat-label">Year:</span>
+                    <span id="year">1</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Week:</span>
+                    <span id="week">1</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Money:</span>
+                    <span id="money">$50,000</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total Visitors:</span>
+                    <span id="total-visitors">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Avg Happiness:</span>
+                    <span id="avg-happiness">0%</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="mountain-view">
+                    <canvas id="mountainCanvas" width="600" height="400"></canvas>
+                    <div class="view-controls">
+                        <button id="zoomIn">🔍+</button>
+                        <button id="zoomOut">🔍-</button>
+                        <button id="resetView">🏔️ Reset</button>
+                    </div>
+                </div>
+                
+                <div class="campsite-info">
+                    <h3>Selected Campsite</h3>
+                    <div id="campsite-details">
+                        <p>Click on a campsite to view details</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="management">Management</button>
+                    <button class="tab-button" data-tab="routes">Routes</button>
+                    <button class="tab-button" data-tab="activities">Activities</button>
+                    <button class="tab-button" data-tab="upgrades">Upgrades</button>
+                </div>
+
+                <div class="tab-content">
+                    <div id="management" class="tab-pane active">
+                        <h3>Camp Management</h3>
+                        <div class="management-section">
+                            <h4>Current Session</h4>
+                            <div class="session-info">
+                                <p>Week <span id="current-week">1</span> of 10</p>
+                                <p>Visitors this week: <span id="weekly-visitors">0</span></p>
+                                <p>Revenue this week: <span id="weekly-revenue">$0</span></p>
+                            </div>
+                            <button id="next-week" class="primary-button">Next Week</button>
+                            <button id="next-year" class="secondary-button">Complete Year</button>
+                        </div>
+                        
+                        <div class="management-section">
+                            <h4>Staff Management</h4>
+                            <div class="staff-controls">
+                                <button id="hire-guide">Hire Guide ($5,000/year)</button>
+                                <button id="hire-maintenance">Hire Maintenance ($3,000/year)</button>
+                                <span id="staff-count">Staff: 0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="routes" class="tab-pane">
+                        <h3>Trail Routes</h3>
+                        <div class="route-controls">
+                            <button id="create-route" class="primary-button">Create New Route</button>
+                            <button id="upgrade-route" class="secondary-button">Upgrade Route</button>
+                        </div>
+                        <div id="routes-list">
+                            <p>No routes created yet. Click "Create New Route" to start!</p>
+                        </div>
+                    </div>
+
+                    <div id="activities" class="tab-pane">
+                        <h3>Campsite Activities</h3>
+                        <div class="activities-grid" id="activities-container">
+                            <!-- Activities will be populated here -->
+                        </div>
+                    </div>
+
+                    <div id="upgrades" class="tab-pane">
+                        <h3>Camp Improvements</h3>
+                        <div class="upgrades-list" id="upgrades-container">
+                            <!-- Upgrades will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-messages" id="game-messages">
+            <!-- Game messages will appear here -->
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="route-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Create New Route</h3>
+            <div class="route-form">
+                <label>From Campsite:</label>
+                <select id="route-from"></select>
+                <label>To Campsite:</label>
+                <select id="route-to"></select>
+                <label>Difficulty:</label>
+                <select id="route-difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="difficult">Difficult</option>
+                    <option value="expert">Expert</option>
+                </select>
+                <label>Distance (miles):</label>
+                <input type="number" id="route-distance" min="1" max="20" value="5">
+                <button id="create-route-confirm" class="primary-button">Create Route</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load all JavaScript modules -->
+    <script src="mountain.js"></script>
+    <script src="campsites.js"></script>
+    <script src="routes.js"></script>
+    <script src="activities.js"></script>
+    <script src="upgrades.js"></script>
+    <script src="ui.js"></script>
+    <script src="game.js"></script>
+</body>
+</html> 
