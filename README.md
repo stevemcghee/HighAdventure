@@ -6,15 +6,21 @@ Welcome to **High Adventure**, a strategic simulation game where you manage a ba
 
 ### Getting Started
 1. Open `index.html` in your web browser
-2. The game automatically starts with auto-progression enabled
+2. Click the **"🚀 Start Game"** button to begin your adventure
 3. You'll begin with $50,000 and a procedurally generated mountain with 6-8 campsites
 4. Each year consists of 10 weeks of summer sessions
 5. Your goal is to maximize visitor happiness and revenue over 10 years
 
 ### 🕐 Game Flow & Phases
 
+#### Game Start
+- **Manual Start**: Click the prominent "🚀 Start Game" button to begin
+- **Initial Setup**: Game loads with all controls disabled until started
+- **Clean Interface**: No unwanted dialogs or automatic progression
+- **Ready State**: Review your mountain and campsites before starting
+
 #### Active Season (Weeks 1-10)
-- **Auto-Progression**: The game automatically advances weeks every 2 seconds
+- **Auto-Progression**: Once started, the game automatically advances weeks every 2 seconds
 - **Visitor Processing**: Each week brings visitors based on your camp's attractions
 - **Revenue Generation**: Visitors pay fees based on route quality and amenities
 - **Happiness Calculation**: Visitor satisfaction is calculated weekly
@@ -182,12 +188,13 @@ Final Score = Sum of all scores
 
 #### Main Dashboard
 - **Game Stats**: Year, week, money, visitors, happiness
+- **Game Control**: Prominent "🚀 Start Game" button with status indicator
 - **Auto-Progress Indicator**: Shows when game is automatically advancing
 - **Phase Indicator**: Shows current game phase (Active/Planning)
 - **Progress Bar**: Visual representation of week progression
 
 #### Tab System
-- **Management**: Current session info, staff hiring, game controls
+- **Management**: Game control, current session info, staff hiring, game controls
 - **Routes**: View existing routes, create new routes, upgrade routes
 - **Activities**: View installed and available activities
 - **Upgrades**: View installed and available upgrades
@@ -242,7 +249,8 @@ Final Score = Sum of all scores
 ### 🎉 Game Features Summary
 
 #### Core Systems
-- ✅ Auto-progression with pause/resume control
+- ✅ Manual game start with prominent start button
+- ✅ Auto-progression with pause/resume control (after game starts)
 - ✅ Year-end planning phase with strategic choices
 - ✅ Procedural mountain generation
 - ✅ Interactive campsite and route management
@@ -255,6 +263,7 @@ Final Score = Sum of all scores
 - ✅ Interactive 3D-style mountain terrain
 - ✅ Color-coded route difficulty system
 - ✅ Modern, responsive user interface
+- ✅ Clean startup experience with no unwanted dialogs
 - ✅ Real-time progress indicators
 - ✅ Strategic planning modal
 - ✅ Comprehensive game statistics
