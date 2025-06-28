@@ -2,6 +2,7 @@
 class ActivityManager {
     constructor() {
         this.activities = [];
+        this.gameState = null;
         this.availableActivities = [
             {
                 id: 'fishing',
@@ -96,6 +97,10 @@ class ActivityManager {
         ];
     }
     
+    setGameState(gameState) {
+        this.gameState = gameState;
+    }
+    
     initializeActivities() {
         // Start with a few basic activities
         this.addActivity('campfire_stories');
@@ -142,6 +147,12 @@ class ActivityManager {
     purchaseActivity(activityId) {
         const activityData = this.availableActivities.find(a => a.id === activityId);
         if (!activityData) return false;
+        
+        // Check if game is available
+        if (!window.game || !window.game.getGameState) {
+            console.error('Game not available for activity purchase');
+            return false;
+        }
         
         if (window.game.getGameState().money >= activityData.cost) {
             window.game.getGameState().money -= activityData.cost;

@@ -2,6 +2,7 @@
 class UpgradeManager {
     constructor() {
         this.upgrades = [];
+        this.gameState = null;
         this.availableUpgrades = [
             {
                 id: 'better_trails',
@@ -114,14 +115,34 @@ class UpgradeManager {
         ];
     }
     
+    setGameState(gameState) {
+        this.gameState = gameState;
+    }
+    
     initializeUpgrades() {
-        // Start with basic upgrades
-        this.purchaseUpgrade('better_trails');
+        // Start with basic upgrades - don't call purchaseUpgrade here
+        // Just add the upgrade directly to avoid the window.game dependency
+        const upgradeData = this.availableUpgrades.find(u => u.id === 'better_trails');
+        if (upgradeData) {
+            const upgrade = {
+                ...upgradeData,
+                purchased: true,
+                level: 1,
+                effectiveness: 100
+            };
+            this.upgrades.push(upgrade);
+        }
     }
     
     purchaseUpgrade(upgradeId) {
         const upgradeData = this.availableUpgrades.find(u => u.id === upgradeId);
         if (!upgradeData) return false;
+        
+        // Check if game is available
+        if (!window.game || !window.game.getGameState) {
+            console.error('Game not available for purchase');
+            return false;
+        }
         
         if (window.game.getGameState().money >= upgradeData.cost) {
             window.game.getGameState().money -= upgradeData.cost;
@@ -143,10 +164,16 @@ class UpgradeManager {
     }
     
     upgradeExisting(upgradeId) {
-        const upgrade = this.upgrades.find(u => u.id === upgradeId);
+        const upgrade = this.getUpgradeById(upgradeId);
         if (!upgrade) return false;
         
         const upgradeCost = upgrade.cost * 0.7; // 70% of original cost
+        
+        // Check if game is available
+        if (!window.game || !window.game.getGameState) {
+            console.error('Game not available for upgrade');
+            return false;
+        }
         
         if (window.game.getGameState().money >= upgradeCost) {
             window.game.getGameState().money -= upgradeCost;
@@ -208,6 +235,12 @@ class UpgradeManager {
     // Get upgrade recommendations based on current state
     getUpgradeRecommendations() {
         const recommendations = [];
+        
+        // Check if game is available
+        if (!window.game || !window.game.getGameState) {
+            return recommendations;
+        }
+        
         const gameState = window.game.getGameState();
         
         // Recommend safety upgrades if happiness is low
@@ -261,6 +294,11 @@ class UpgradeManager {
         const upgradeData = this.availableUpgrades.find(u => u.id === upgradeId);
         if (!upgradeData) return false;
         
+        // Check if game is available
+        if (!window.game || !window.game.getGameState) {
+            return false;
+        }
+        
         return window.game.getGameState().money >= upgradeData.cost;
     }
     
@@ -270,6 +308,12 @@ class UpgradeManager {
         if (!upgrade) return false;
         
         const upgradeCost = upgrade.cost * 0.7;
+        
+        // Check if game is available
+        if (!window.game || !window.game.getGameState) {
+            return false;
+        }
+        
         return window.game.getGameState().money >= upgradeCost;
     }
 } 

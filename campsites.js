@@ -89,4 +89,15 @@ class CampsiteManager {
     getCampsiteNames() {
         return this.campsites.map(c => c.name);
     }
+    
+    getCampsiteAtPosition(x, y) {
+        const tolerance = 10; // Click tolerance
+        
+        return this.campsites.find(campsite => {
+            const distance = Math.sqrt(
+                Math.pow(campsite.x - x, 2) + Math.pow(campsite.y - y, 2)
+            );
+            return distance < tolerance;
+        });
+    }
 } 

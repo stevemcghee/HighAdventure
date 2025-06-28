@@ -3,9 +3,20 @@ class RouteManager {
     constructor() {
         this.routes = [];
         this.routeIdCounter = 0;
+        this.campsiteManager = null;
+    }
+    
+    setCampsiteManager(campsiteManager) {
+        this.campsiteManager = campsiteManager;
     }
     
     createRoute(from, to, difficulty, distance) {
+        // Check if route already exists between these campsites
+        if (this.routeExists(from, to)) {
+            console.log(`Route already exists between ${from} and ${to}`);
+            return null; // Return null to indicate failure
+        }
+        
         const route = {
             id: this.routeIdCounter++,
             from: from,
@@ -90,6 +101,12 @@ class RouteManager {
         
         const upgradeCost = route.cost * 0.5; // 50% of original cost
         
+        // Check if game is available
+        if (!window.game || !window.game.getGameState) {
+            console.error('Game not available for route upgrade');
+            return false;
+        }
+        
         if (window.game.getGameState().money >= upgradeCost) {
             window.game.getGameState().money -= upgradeCost;
             route.quality = Math.min(100, route.quality + 20);
@@ -109,6 +126,12 @@ class RouteManager {
         if (!route) return false;
         
         const maintenanceCost = route.cost * 0.1; // 10% of original cost
+        
+        // Check if game is available
+        if (!window.game || !window.game.getGameState) {
+            console.error('Game not available for route maintenance');
+            return false;
+        }
         
         if (window.game.getGameState().money >= maintenanceCost) {
             window.game.getGameState().money -= maintenanceCost;
