@@ -34,6 +34,9 @@ class HighAdventureGame {
         this.mountain.generateTerrain();
         this.campsiteManager.generateCampsites(this.mountain);
         
+        // Create initial connected routes
+        this.createInitialRoutes();
+        
         // Debug: Check if routeManager has the method
         console.log('RouteManager methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.routeManager)));
         console.log('RouteManager setCampsiteManager exists:', typeof this.routeManager.setCampsiteManager);
@@ -50,11 +53,57 @@ class HighAdventureGame {
         
         this.ui.initialize(this);
         
+        // Update UI to show initial routes
+        this.ui.updateRoutesList();
+        
         // Don't start auto-progression automatically
         // this.startAutoProgress();
         
         console.log('Game initialized successfully:', this);
         this.addMessage("Welcome to High Adventure! Click 'Start Game' to begin your backpacking camp adventure.");
+    }
+    
+    createInitialRoutes() {
+        const campsites = this.campsiteManager.getCampsites();
+        
+        if (campsites.length < 3) {
+            console.log('Not enough campsites to create initial routes');
+            return;
+        }
+        
+        // Create 3 connected routes in a triangle pattern
+        const route1 = this.routeManager.createRoute(
+            campsites[0].name, 
+            campsites[1].name, 
+            'moderate', 
+            4
+        );
+        
+        const route2 = this.routeManager.createRoute(
+            campsites[1].name, 
+            campsites[2].name, 
+            'easy', 
+            3
+        );
+        
+        const route3 = this.routeManager.createRoute(
+            campsites[2].name, 
+            campsites[0].name, 
+            'difficult', 
+            5
+        );
+        
+        if (route1 && route2 && route3) {
+            console.log('Created initial routes:', route1, route2, route3);
+            this.addMessage(`Created initial trail network connecting ${campsites[0].name}, ${campsites[1].name}, and ${campsites[2].name}`);
+            
+            // Re-render the mountain to show the initial routes
+            if (this.mountain) {
+                this.mountain.render();
+            }
+        } else {
+            console.log('Failed to create some initial routes');
+        }
     }
     
     startGame() {
@@ -147,6 +196,10 @@ class HighAdventureGame {
                         const route = this.routeManager.createRoute(routePair.from, routePair.to, 'moderate', 5);
                         if (route) {
                             this.addMessage(`Created new trail from ${routePair.from} to ${routePair.to}`);
+                            // Re-render the mountain to show the new route
+                            if (this.mountain) {
+                                this.mountain.render();
+                            }
                         } else {
                             this.addMessage(`Failed to create route - duplicate may exist`);
                         }

@@ -260,6 +260,10 @@ class GameUI {
         if (route) {
             this.addMessage(`Created route from ${from} to ${to} for $${route.cost}`);
             this.updateRoutesList();
+            // Re-render the mountain to show the new route
+            if (this.game.getMountain()) {
+                this.game.getMountain().render();
+            }
         } else {
             this.addMessage("Failed to create route!");
         }
