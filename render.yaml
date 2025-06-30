@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: high-adventure-game
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /
+    
+  - type: pserv
+    name: high-adventure-db
+    env: postgresql
+    plan: free
+    ipAllowList: [] 
