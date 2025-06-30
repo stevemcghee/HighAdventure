@@ -104,6 +104,17 @@ app.post('/api/sessions', async (req, res) => {
     const { sessionName, maxPlayers = 4 } = req.body;
     const client = await pool.connect();
     
+    // Check if a session with this name already exists
+    const existingSession = await client.query(
+      'SELECT id FROM game_sessions WHERE session_name = $1 AND is_active = true',
+      [sessionName]
+    );
+    
+    if (existingSession.rows.length > 0) {
+      client.release();
+      return res.status(409).json({ error: 'A session with this name already exists' });
+    }
+    
     const result = await client.query(
       'INSERT INTO game_sessions (session_name, game_state, max_players) VALUES ($1, $2, $3) RETURNING id',
       [sessionName, getInitialGameState(), maxPlayers]

@@ -61,7 +61,8 @@ class MultiplayerClient {
             });
             
             if (!response.ok) {
-                throw new Error('Failed to create session');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create session');
             }
             
             const data = await response.json();
@@ -309,21 +310,33 @@ class MultiplayerUI {
     }
     
     async showCreateSessionModal() {
-        const sessionName = prompt('Enter session name:');
+        let sessionName = prompt('Enter session name:');
         if (!sessionName) return;
         
-        try {
-            const sessionId = await this.client.createSession(sessionName);
-            const playerName = prompt('Enter your player name:');
-            if (!playerName) return;
-            
-            await this.client.joinSession(sessionId, playerName);
-            this.showMessage(`Created and joined session: ${sessionName}`);
-            
-            // Refresh sessions list to show the newly created session
-            this.refreshSessions();
-        } catch (error) {
-            this.showError('Failed to create session: ' + error.message);
+        // Keep prompting for a new name if there's a duplicate
+        while (true) {
+            try {
+                const sessionId = await this.client.createSession(sessionName);
+                const playerName = prompt('Enter your player name:');
+                if (!playerName) return;
+                
+                await this.client.joinSession(sessionId, playerName);
+                this.showMessage(`Created and joined session: ${sessionName}`);
+                
+                // Refresh sessions list to show the newly created session
+                this.refreshSessions();
+                break; // Success, exit the loop
+            } catch (error) {
+                if (error.message.includes('already exists')) {
+                    // Session name already exists, prompt for a new name
+                    sessionName = prompt(`Session name "${sessionName}" already exists. Please enter a different name:`);
+                    if (!sessionName) return; // User cancelled
+                } else {
+                    // Other error, show it and exit
+                    this.showError('Failed to create session: ' + error.message);
+                    break;
+                }
+            }
         }
     }
     
