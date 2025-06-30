@@ -51,6 +51,7 @@ class MultiplayerClient {
     
     async createSession(sessionName, maxPlayers = 4) {
         try {
+            console.log('Creating session:', { sessionName, maxPlayers });
             const response = await fetch('/api/sessions', {
                 method: 'POST',
                 headers: {
@@ -65,6 +66,7 @@ class MultiplayerClient {
             
             const data = await response.json();
             this.sessionId = data.sessionId;
+            console.log('Session created with ID:', this.sessionId);
             
             return this.sessionId;
         } catch (error) {
@@ -89,7 +91,9 @@ class MultiplayerClient {
             if (!response.ok) {
                 throw new Error('Failed to fetch sessions');
             }
-            return await response.json();
+            const sessions = await response.json();
+            console.log('Fetched sessions:', sessions);
+            return sessions;
         } catch (error) {
             console.error('Error fetching sessions:', error);
             throw error;
@@ -161,15 +165,17 @@ class MultiplayerClient {
         const playersList = document.getElementById('players-list');
         if (!playersList) return;
         
+        if (this.players.size === 0) {
+            playersList.innerHTML = '<span class="no-players">None</span>';
+            return;
+        }
+        
         playersList.innerHTML = '';
         
         this.players.forEach(player => {
             const playerElement = document.createElement('div');
             playerElement.className = 'player-item';
-            playerElement.innerHTML = `
-                <span class="player-name">${player.name}</span>
-                <span class="player-status">🟢 Online</span>
-            `;
+            playerElement.textContent = player.name;
             playersList.appendChild(playerElement);
         });
     }
@@ -244,42 +250,48 @@ class MultiplayerUI {
         const multiplayerPanel = document.createElement('div');
         multiplayerPanel.className = 'multiplayer-panel';
         multiplayerPanel.innerHTML = `
-            <div class="multiplayer-header">
-                <h3>🌐 Multiplayer</h3>
-                <div class="connection-info">
-                    <span id="connection-status" class="status-disconnected">🔴 Disconnected</span>
-                </div>
-            </div>
-            
             <div class="multiplayer-content">
-                <div class="session-controls">
-                    <button id="create-session-btn" class="primary-button">Create Session</button>
-                    <button id="join-session-btn" class="secondary-button">Join Session</button>
-                    <button id="refresh-sessions-btn" class="secondary-button">Refresh</button>
+                <div class="multiplayer-left">
+                    <div class="multiplayer-header">
+                        <h3>🌐 Multiplayer</h3>
+                        <div class="connection-info">
+                            <span id="connection-status" class="status-disconnected">🔴 Disconnected</span>
+                        </div>
+                    </div>
+                    
+                    <div class="session-controls">
+                        <button id="create-session-btn" class="primary-button">Create Session</button>
+                        <button id="join-session-btn" class="secondary-button">Join Session</button>
+                        <button id="refresh-sessions-btn" class="secondary-button">Refresh</button>
+                    </div>
                 </div>
                 
-                <div class="sessions-list" id="sessions-list">
-                    <p>No active sessions found</p>
-                </div>
-                
-                <div class="players-section">
-                    <h4>Players in Session</h4>
-                    <div class="players-list" id="players-list">
-                        <p>No players connected</p>
+                <div class="multiplayer-right">
+                    <div class="sessions-list" id="sessions-list">
+                        <span class="no-sessions">Loading sessions...</span>
+                    </div>
+                    
+                    <div class="players-section">
+                        <h4>Players:</h4>
+                        <div class="players-list" id="players-list">
+                            <span class="no-players">None</span>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
         
-        // Insert into the game container
-        const gameContainer = document.querySelector('.game-container');
-        gameContainer.appendChild(multiplayerPanel);
+        // Insert at the top of the body instead of game container
+        document.body.insertBefore(multiplayerPanel, document.body.firstChild);
         
         // Add event listeners
         this.addEventListeners();
         
         // Add CSS styles
         this.addStyles();
+        
+        // Load initial sessions
+        this.refreshSessions();
     }
     
     addEventListeners() {
@@ -307,6 +319,9 @@ class MultiplayerUI {
             
             await this.client.joinSession(sessionId, playerName);
             this.showMessage(`Created and joined session: ${sessionName}`);
+            
+            // Refresh sessions list to show the newly created session
+            this.refreshSessions();
         } catch (error) {
             this.showError('Failed to create session: ' + error.message);
         }
@@ -341,6 +356,9 @@ class MultiplayerUI {
             
             await this.client.joinSession(selectedSession.id, playerName);
             this.showMessage(`Joined session: ${selectedSession.session_name}`);
+            
+            // Refresh sessions list to update player count
+            this.refreshSessions();
         } catch (error) {
             this.showError('Failed to join session: ' + error.message);
         }
@@ -349,8 +367,10 @@ class MultiplayerUI {
     async refreshSessions() {
         try {
             const sessions = await this.client.getSessions();
+            console.log('Refreshing sessions list with:', sessions);
             this.updateSessionsList(sessions);
         } catch (error) {
+            console.error('Error refreshing sessions:', error);
             this.showError('Failed to refresh sessions: ' + error.message);
         }
     }
@@ -359,17 +379,16 @@ class MultiplayerUI {
         const sessionsList = document.getElementById('sessions-list');
         
         if (sessions.length === 0) {
-            sessionsList.innerHTML = '<p>No active sessions found</p>';
+            sessionsList.innerHTML = '<span class="no-sessions">No active sessions found</span>';
             return;
         }
         
         sessionsList.innerHTML = sessions.map(session => `
             <div class="session-item">
-                <div class="session-name">${session.session_name}</div>
-                <div class="session-info">
-                    <span class="player-count">${session.player_count}/${session.max_players} players</span>
-                    <span class="session-date">${new Date(session.created_at).toLocaleDateString()}</span>
-                </div>
+                <span class="session-name">${session.session_name}</span>
+                <span class="session-info">
+                    <span class="player-count">${session.player_count}/${session.max_players}</span>
+                </span>
             </div>
         `).join('');
     }
@@ -379,35 +398,48 @@ class MultiplayerUI {
         style.textContent = `
             .multiplayer-panel {
                 position: fixed;
-                top: 20px;
-                right: 20px;
-                width: 300px;
-                background: rgba(0, 0, 0, 0.9);
-                border: 2px solid #3b82f6;
-                border-radius: 10px;
-                padding: 15px;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #1e293b, #334155);
+                border-bottom: 3px solid #3b82f6;
+                padding: 10px 20px;
                 color: white;
                 z-index: 1000;
-                max-height: 80vh;
-                overflow-y: auto;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            
+            .multiplayer-content {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            
+            .multiplayer-left {
+                display: flex;
+                align-items: center;
+                gap: 20px;
             }
             
             .multiplayer-header {
                 display: flex;
-                justify-content: space-between;
                 align-items: center;
-                margin-bottom: 15px;
-                border-bottom: 1px solid #3b82f6;
-                padding-bottom: 10px;
+                gap: 10px;
             }
             
             .multiplayer-header h3 {
                 margin: 0;
                 color: #3b82f6;
+                font-size: 18px;
             }
             
             .connection-info {
                 font-size: 12px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
             }
             
             .status-connected {
@@ -420,59 +452,110 @@ class MultiplayerUI {
             
             .session-controls {
                 display: flex;
-                gap: 5px;
-                margin-bottom: 15px;
+                gap: 10px;
+                align-items: center;
             }
             
             .session-controls button {
-                flex: 1;
-                padding: 8px;
-                font-size: 12px;
+                padding: 8px 16px;
+                font-size: 14px;
+                border-radius: 6px;
+                border: none;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.3s;
+            }
+            
+            .session-controls .primary-button {
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                color: white;
+            }
+            
+            .session-controls .primary-button:hover {
+                background: linear-gradient(135deg, #2563eb, #1e40af);
+                transform: translateY(-1px);
+            }
+            
+            .session-controls .secondary-button {
+                background: linear-gradient(135deg, #6b7280, #4b5563);
+                color: white;
+            }
+            
+            .session-controls .secondary-button:hover {
+                background: linear-gradient(135deg, #4b5563, #374151);
+                transform: translateY(-1px);
+            }
+            
+            .multiplayer-right {
+                display: flex;
+                align-items: center;
+                gap: 20px;
             }
             
             .sessions-list {
-                margin-bottom: 15px;
+                display: flex;
+                gap: 15px;
+                align-items: center;
             }
             
             .session-item {
                 background: rgba(59, 130, 246, 0.1);
                 border: 1px solid #3b82f6;
-                border-radius: 5px;
-                padding: 10px;
-                margin-bottom: 5px;
+                border-radius: 6px;
+                padding: 8px 12px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 14px;
             }
             
             .session-name {
                 font-weight: bold;
-                margin-bottom: 5px;
+                color: #3b82f6;
             }
             
             .session-info {
                 display: flex;
-                justify-content: space-between;
+                gap: 10px;
                 font-size: 12px;
                 color: #9ca3af;
             }
             
+            .players-section {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
             .players-section h4 {
-                margin: 0 0 10px 0;
+                margin: 0;
                 color: #3b82f6;
+                font-size: 14px;
+            }
+            
+            .players-list {
+                display: flex;
+                gap: 10px;
+                align-items: center;
             }
             
             .player-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 5px 0;
-                border-bottom: 1px solid rgba(59, 130, 246, 0.3);
-            }
-            
-            .player-name {
-                font-weight: bold;
-            }
-            
-            .player-status {
+                background: rgba(16, 185, 129, 0.1);
+                border: 1px solid #10b981;
+                border-radius: 4px;
+                padding: 4px 8px;
                 font-size: 12px;
+                color: #10b981;
+            }
+            
+            .no-sessions {
+                color: #9ca3af;
+                font-style: italic;
+            }
+            
+            .no-players {
+                color: #9ca3af;
+                font-style: italic;
             }
             
             .action-notification {
@@ -513,6 +596,11 @@ class MultiplayerUI {
                 20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
                 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
                 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            }
+            
+            /* Adjust main game container to account for top bar */
+            .game-container {
+                margin-top: 80px;
             }
         `;
         document.head.appendChild(style);

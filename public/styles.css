@@ -637,7 +637,7 @@ body {
 /* Auto-progression indicator */
 .auto-progress-indicator {
     position: fixed;
-    top: 20px;
+    top: 100px;
     right: 20px;
     background: #10b981;
     color: white;
@@ -658,7 +658,7 @@ body {
 /* Game phase indicator */
 .game-phase-indicator {
     position: fixed;
-    top: 20px;
+    top: 100px;
     left: 20px;
     background: #f59e0b;
     color: white;
