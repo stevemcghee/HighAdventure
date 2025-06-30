@@ -15,5 +15,4 @@ services:
   - type: pserv
     name: high-adventure-db
     env: postgresql
-    plan: free
-    ipAllowList: [] 
+    plan: free 
