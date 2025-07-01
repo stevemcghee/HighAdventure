@@ -2,15 +2,53 @@
 class CampsiteManager {
     constructor() {
         this.campsites = [];
-        this.campsiteNames = [
+        this.futuristicNames = [
+            "Nebula Point", "Starlight Haven", "Quantum Glade", "Aurora Ridge", 
+            "Galactic Springs", "Nova Vista", "Celestial Bay", "Photon Fields",
+            "Gravity Rest", "Cosmic Overlook", "Astro Meadow", "Plasma Falls",
+            "Ion Valley", "Comet Crest", "Eclipse Grove", "Orbit Refuge",
+            "Pulsar Peak", "Void Vista", "Neutron Nest", "Fusion Fields",
+            "Meteor Mesa", "Solar Sanctuary", "Lunar Lagoon", "Venus Valley",
+            "Mars Meadow", "Jupiter Junction", "Saturn Springs", "Uranus Uplands",
+            "Neptune Nook", "Pluto Plateau", "Andromeda Arc", "Orion Oasis",
+            "Sirius Station", "Vega Vista", "Polaris Point", "Cassiopeia Cove",
+            "Lyra Lodge", "Cygnus Camp", "Aquila Aerie", "Pegasus Place",
+            "Centaurus Center", "Draco Den", "Hydra Haven", "Leo Lodge",
+            "Virgo Vista", "Libra Landing", "Scorpius Station", "Sagittarius Springs",
+            "Capricorn Cove", "Aquarius Arc", "Pisces Point", "Aries Aerie",
+            "Taurus Terrace", "Gemini Grove", "Cancer Cove", "Leo Lagoon"
+        ];
+        this.earthNames = [
             "Eagle's Nest", "Bear Creek", "Mountain View", "Pine Ridge", 
             "Crystal Lake", "Sunset Peak", "Wildflower Meadow", "Rocky Point",
             "Hidden Valley", "Thunder Ridge", "Misty Falls", "Golden Peak",
-            "Emerald Basin", "Silver Creek", "Alpine Meadow", "Cedar Grove"
+            "Emerald Basin", "Silver Creek", "Alpine Meadow", "Cedar Grove",
+            "Aspen Heights", "Birch Brook", "Cedar Crest", "Dogwood Dell",
+            "Elm Valley", "Fir Forest", "Golden Gate", "Hickory Hill",
+            "Ivy Ridge", "Juniper Junction", "Kings Canyon", "Larch Lake",
+            "Maple Meadows", "Oak Overlook", "Pine Valley", "Quaking Aspen",
+            "Redwood Ridge", "Spruce Springs", "Tamarack Trail", "Umbrella Falls",
+            "Vista Point", "Willow Way", "Yellowstone", "Zion Springs",
+            "Alpine Pass", "Bear Mountain", "Cascade Falls", "Deer Valley",
+            "Eagle Peak", "Forest Glen", "Granite Peak", "Highland Pass",
+            "Indian Springs", "Juniper Peak", "Kings Peak", "Lone Pine",
+            "Mountain Home", "North Star", "Old Faithful", "Pine Creek"
         ];
+        
+        this.campsiteNameIndex = 0;
     }
     
     generateCampsites(mountain) {
+        // Determine which name list to use based on current game mode
+        this.campsiteNames = (window.gameMode === 'earth') ? this.earthNames : this.futuristicNames;
+        
+        // Shuffle names for uniqueness
+        for (let i = this.campsiteNames.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.campsiteNames[i], this.campsiteNames[j]] = [this.campsiteNames[j], this.campsiteNames[i]];
+        }
+        this.campsiteNameIndex = 0;
+        
         const numCampsites = 12 + Math.floor(Math.random() * 6);
         
         for (let i = 0; i < numCampsites; i++) {
@@ -31,7 +69,12 @@ class CampsiteManager {
         } while (this.isTooCloseToExisting(x, y) && attempts < maxAttempts);
         
         const height = mountain.getTerrainHeight(x, y);
-        const name = this.campsiteNames[index] || `Campsite ${index + 1}`;
+        let name;
+        if (this.campsiteNameIndex < this.campsiteNames.length) {
+            name = this.campsiteNames[this.campsiteNameIndex++];
+        } else {
+            name = `Resort ${index + 1}`;
+        }
         
         return {
             id: index,

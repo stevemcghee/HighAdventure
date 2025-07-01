@@ -1,14 +1,152 @@
-// Activity manager for campsite activities
+// Activity manager for resort activities
 class ActivityManager {
     constructor() {
         this.gameState = null;
-        this.availableActivities = [
+        this.futuristicActivities = [
+            {
+                id: 'holographic_tours',
+                name: 'Holographic Tours',
+                description: 'Immersive 3D guided experiences',
+                icon: '👁️',
+                cost: 12000,
+                happinessBonus: 15,
+                popularity: 8
+            },
+            {
+                id: 'gravity_parks',
+                name: 'Gravity Parks',
+                description: 'Low-gravity adventure zones',
+                icon: '🌌',
+                cost: 30000,
+                happinessBonus: 25,
+                popularity: 6
+            },
+            {
+                id: 'alien_wildlife',
+                name: 'Alien Wildlife Viewing',
+                description: 'Observe native Terra Nova creatures',
+                icon: '🦅',
+                cost: 8000,
+                happinessBonus: 10,
+                popularity: 9
+            },
+            {
+                id: 'stellar_observatory',
+                name: 'Stellar Observatory',
+                description: 'Crystal-clear cosmic viewing',
+                icon: '⭐',
+                cost: 5000,
+                happinessBonus: 8,
+                popularity: 7
+            },
+            {
+                id: 'quantum_photography',
+                name: 'Quantum Photography',
+                description: 'Capture multi-dimensional landscapes',
+                icon: '📸',
+                cost: 18000,
+                happinessBonus: 12,
+                popularity: 8
+            },
+            {
+                id: 'neural_storytelling',
+                name: 'Neural Storytelling',
+                description: 'AI-enhanced narrative experiences',
+                icon: '🧠',
+                cost: 3000,
+                happinessBonus: 5,
+                popularity: 10
+            },
+            {
+                id: 'bio_luminescent_hikes',
+                name: 'Bio-luminescent Hikes',
+                description: 'Guided tours through glowing forests',
+                icon: '🌲',
+                cost: 15000,
+                happinessBonus: 18,
+                popularity: 9
+            },
+            {
+                id: 'crystal_lakes',
+                name: 'Crystal Lakes',
+                description: 'Swim in healing mineral waters',
+                icon: '🏊',
+                cost: 10000,
+                happinessBonus: 12,
+                popularity: 8
+            },
+            {
+                id: 'avian_spectacles',
+                name: 'Avian Spectacles',
+                description: 'Watch exotic flying creatures',
+                icon: '🦜',
+                cost: 7000,
+                happinessBonus: 10,
+                popularity: 7
+            },
+            {
+                id: 'hover_biking',
+                name: 'Hover Biking',
+                description: 'Anti-gravity trail riding',
+                icon: '🚴',
+                cost: 25000,
+                happinessBonus: 20,
+                popularity: 6
+            },
+            {
+                id: 'teleportation_experience',
+                name: 'Teleportation Experience',
+                description: 'Instant travel between viewpoints',
+                icon: '⚡',
+                cost: 35000,
+                happinessBonus: 30,
+                popularity: 5
+            },
+            {
+                id: 'atmospheric_dining',
+                name: 'Atmospheric Dining',
+                description: 'Floating restaurants with planet views',
+                icon: '🍽️',
+                cost: 20000,
+                happinessBonus: 16,
+                popularity: 8
+            },
+            {
+                id: 'time_dilation_zones',
+                name: 'Time Dilation Zones',
+                description: 'Experience time at different speeds',
+                icon: '⏰',
+                cost: 40000,
+                happinessBonus: 35,
+                popularity: 4
+            },
+            {
+                id: 'neural_meditation',
+                name: 'Neural Meditation',
+                description: 'AI-guided mindfulness sessions',
+                icon: '🧘',
+                cost: 12000,
+                happinessBonus: 14,
+                popularity: 7
+            },
+            {
+                id: 'crystal_caves',
+                name: 'Crystal Caves',
+                description: 'Explore underground crystal formations',
+                icon: '💎',
+                cost: 22000,
+                happinessBonus: 18,
+                popularity: 6
+            }
+        ];
+        
+        this.earthActivities = [
             {
                 id: 'fishing',
                 name: 'Fishing',
                 description: 'Catch trout in mountain streams',
                 icon: '🎣',
-                cost: 2000,
+                cost: 12000,
                 happinessBonus: 15,
                 popularity: 8
             },
@@ -17,7 +155,7 @@ class ActivityManager {
                 name: 'Rock Climbing',
                 description: 'Scale granite cliffs with guides',
                 icon: '🧗',
-                cost: 5000,
+                cost: 30000,
                 happinessBonus: 25,
                 popularity: 6
             },
@@ -26,7 +164,7 @@ class ActivityManager {
                 name: 'Wildlife Viewing',
                 description: 'Spot bears, elk, and eagles',
                 icon: '🦅',
-                cost: 1500,
+                cost: 8000,
                 happinessBonus: 10,
                 popularity: 9
             },
@@ -35,7 +173,7 @@ class ActivityManager {
                 name: 'Stargazing',
                 description: 'Clear mountain night skies',
                 icon: '⭐',
-                cost: 1000,
+                cost: 5000,
                 happinessBonus: 8,
                 popularity: 7
             },
@@ -44,7 +182,7 @@ class ActivityManager {
                 name: 'Photography',
                 description: 'Capture stunning landscapes',
                 icon: '📸',
-                cost: 3000,
+                cost: 18000,
                 happinessBonus: 12,
                 popularity: 8
             },
@@ -53,7 +191,7 @@ class ActivityManager {
                 name: 'Campfire Stories',
                 description: 'Evening storytelling sessions',
                 icon: '🔥',
-                cost: 500,
+                cost: 3000,
                 happinessBonus: 5,
                 popularity: 10
             },
@@ -62,7 +200,7 @@ class ActivityManager {
                 name: 'Nature Hikes',
                 description: 'Guided educational walks',
                 icon: '🌲',
-                cost: 2500,
+                cost: 15000,
                 happinessBonus: 18,
                 popularity: 9
             },
@@ -71,7 +209,7 @@ class ActivityManager {
                 name: 'Swimming',
                 description: 'Cool off in mountain lakes',
                 icon: '🏊',
-                cost: 1500,
+                cost: 10000,
                 happinessBonus: 12,
                 popularity: 8
             },
@@ -80,7 +218,7 @@ class ActivityManager {
                 name: 'Bird Watching',
                 description: 'Observe diverse bird species',
                 icon: '🦜',
-                cost: 1200,
+                cost: 7000,
                 happinessBonus: 10,
                 popularity: 7
             },
@@ -89,8 +227,53 @@ class ActivityManager {
                 name: 'Mountain Biking',
                 description: 'Ride challenging trails',
                 icon: '🚴',
-                cost: 4000,
+                cost: 25000,
                 happinessBonus: 20,
+                popularity: 6
+            },
+            {
+                id: 'horseback_riding',
+                name: 'Horseback Riding',
+                description: 'Explore trails on horseback',
+                icon: '🐎',
+                cost: 35000,
+                happinessBonus: 30,
+                popularity: 5
+            },
+            {
+                id: 'outdoor_dining',
+                name: 'Outdoor Dining',
+                description: 'Scenic picnic areas and restaurants',
+                icon: '🍽️',
+                cost: 20000,
+                happinessBonus: 16,
+                popularity: 8
+            },
+            {
+                id: 'sunset_viewing',
+                name: 'Sunset Viewing',
+                description: 'Spectacular sunset viewpoints',
+                icon: '🌅',
+                cost: 40000,
+                happinessBonus: 35,
+                popularity: 4
+            },
+            {
+                id: 'yoga_classes',
+                name: 'Yoga Classes',
+                description: 'Outdoor yoga and meditation',
+                icon: '🧘',
+                cost: 12000,
+                happinessBonus: 14,
+                popularity: 7
+            },
+            {
+                id: 'cave_exploration',
+                name: 'Cave Exploration',
+                description: 'Explore limestone caves',
+                icon: '🕳️',
+                cost: 22000,
+                happinessBonus: 18,
                 popularity: 6
             }
         ];
@@ -102,12 +285,17 @@ class ActivityManager {
     
     initializeActivities(campsite) {
         // Start with a few basic activities for the campsite
-        this.addActivityToCampsite(campsite, 'campfire_stories');
-        this.addActivityToCampsite(campsite, 'wildlife_viewing');
+        if (window.gameMode === 'earth') {
+            this.addActivityToCampsite(campsite, 'campfire_stories');
+            this.addActivityToCampsite(campsite, 'wildlife_viewing');
+        } else {
+            this.addActivityToCampsite(campsite, 'neural_storytelling');
+            this.addActivityToCampsite(campsite, 'alien_wildlife');
+        }
     }
     
     addActivityToCampsite(campsite, activityId) {
-        const activityData = this.availableActivities.find(a => a.id === activityId);
+        const activityData = this.getAvailableActivities().find(a => a.id === activityId);
         if (!activityData) return false;
         
         const activity = {
@@ -130,7 +318,7 @@ class ActivityManager {
     
     getAvailableActivitiesForCampsite(campsite) {
         const installedActivities = this.getCampsiteActivities(campsite);
-        return this.availableActivities.filter(activity => 
+        return this.getAvailableActivities().filter(activity => 
             !installedActivities.some(installed => installed.id === activity.id)
         );
     }
@@ -148,7 +336,7 @@ class ActivityManager {
     }
     
     purchaseActivityForCampsite(campsite, activityId) {
-        const activityData = this.availableActivities.find(a => a.id === activityId);
+        const activityData = this.getAvailableActivities().find(a => a.id === activityId);
         if (!activityData) return false;
         
         // Check if game is available
@@ -196,15 +384,15 @@ class ActivityManager {
     getSuitableActivitiesForCampsite(campsite) {
         const suitableActivities = [];
         
-        this.availableActivities.forEach(activity => {
+        this.getAvailableActivities().forEach(activity => {
             let suitable = true;
             
             // Check elevation requirements
-            if (activity.id === 'rock_climbing' && campsite.elevation < 6000) {
+            if (activity.id === 'gravity_parks' && campsite.elevation < 6000) {
                 suitable = false;
             }
             
-            if (activity.id === 'swimming' && campsite.elevation > 8000) {
+            if (activity.id === 'crystal_lakes' && campsite.elevation > 8000) {
                 suitable = false;
             }
             
@@ -222,17 +410,17 @@ class ActivityManager {
         
         // Water-based activities for campsites near water
         if (campsite.facilities.includes('water_source')) {
-            recommendations.push('fishing', 'swimming');
+            recommendations.push('crystal_lakes');
         }
         
         // High elevation activities
         if (campsite.elevation > 7000) {
-            recommendations.push('stargazing', 'photography');
+            recommendations.push('stellar_observatory');
         }
         
         // Forest activities
         if (campsite.elevation > 4000 && campsite.elevation < 7000) {
-            recommendations.push('wildlife_viewing', 'bird_watching', 'nature_hikes');
+            recommendations.push('bio_luminescent_hikes');
         }
         
         return recommendations.filter((id, index, arr) => arr.indexOf(id) === index);
@@ -261,5 +449,10 @@ class ActivityManager {
             averageSatisfaction: activities.length > 0 ? 
                 activities.reduce((sum, a) => sum + a.satisfaction, 0) / activities.length : 0
         };
+    }
+    
+    getAvailableActivities() {
+        // Determine which activity list to use based on current game mode
+        return (window.gameMode === 'earth') ? this.earthActivities : this.futuristicActivities;
     }
 } 

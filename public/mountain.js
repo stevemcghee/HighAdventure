@@ -21,6 +21,9 @@ class MountainGenerator {
             this.resizeCanvas();
             this.render();
         });
+        
+        this.usedLakeNames = new Set();
+        this.usedPeakNames = new Set();
     }
     
     resizeCanvas() {
@@ -59,7 +62,7 @@ class MountainGenerator {
         });
         
         document.getElementById('zoomOut').addEventListener('click', () => {
-            this.zoom = Math.max(this.zoom / 1.2, 0.5);
+            this.zoom = Math.max(this.zoom / 1.2, 1.0);
             this.render();
         });
         
@@ -85,8 +88,23 @@ class MountainGenerator {
             if (isDragging) {
                 const deltaX = e.clientX - lastX;
                 const deltaY = e.clientY - lastY;
-                this.offsetX += deltaX / this.zoom;
-                this.offsetY += deltaY / this.zoom;
+                
+                // Calculate new offset positions
+                const newOffsetX = this.offsetX + deltaX / this.zoom;
+                const newOffsetY = this.offsetY + deltaY / this.zoom;
+                
+                // Calculate boundaries to keep terrain visible
+                const terrainWidth = this.terrain ? this.terrain.length : 200;
+                const terrainHeight = this.terrain ? this.terrain[0].length : 200;
+                const maxOffsetX = this.width * (1 - 1/this.zoom) / 2;
+                const maxOffsetY = this.height * (1 - 1/this.zoom) / 2;
+                const minOffsetX = -maxOffsetX;
+                const minOffsetY = -maxOffsetY;
+                
+                // Apply boundaries
+                this.offsetX = Math.max(minOffsetX, Math.min(maxOffsetX, newOffsetX));
+                this.offsetY = Math.max(minOffsetY, Math.min(maxOffsetY, newOffsetY));
+                
                 lastX = e.clientX;
                 lastY = e.clientY;
                 this.render();
@@ -108,6 +126,8 @@ class MountainGenerator {
         console.log('Terrain generated, now generating lakes...');
         this.generateLakes();
         console.log('Lakes generated, now rendering...');
+        this.usedLakeNames = new Set();
+        this.usedPeakNames = new Set();
         this.render();
     }
     
@@ -259,12 +279,47 @@ class MountainGenerator {
     }
     
     generateLakeName() {
-        const lakeNames = [
+        const futuristicNames = [
+            "Nebula Lake", "Starlake", "Quantum Pool", "Aurora Basin", 
+            "Galactic Lagoon", "Nova Reservoir", "Celestial Mere", "Photon Pond",
+            "Gravity Bay", "Cosmic Tarn", "Astro Loch", "Plasma Pool",
+            "Pulsar Pool", "Void Waters", "Neutron Nook", "Fusion Fjord",
+            "Meteor Mere", "Solar Sea", "Lunar Lake", "Venus Vista",
+            "Mars Marsh", "Jupiter Jetty", "Saturn Sound", "Uranus Bay",
+            "Neptune Narrows", "Pluto Pond", "Andromeda Arm", "Orion Ocean",
+            "Sirius Sea", "Vega Vista", "Polaris Pool", "Cassiopeia Cove",
+            "Lyra Lagoon", "Cygnus Sound", "Aquila Arm", "Pegasus Pool",
+            "Centaurus Cove", "Draco Delta", "Hydra Harbor", "Leo Lagoon",
+            "Virgo Vista", "Libra Lake", "Scorpius Sound", "Sagittarius Sea",
+            "Capricorn Cove", "Aquarius Arm", "Pisces Pool", "Aries Arm",
+            "Taurus Tarn", "Gemini Gulf", "Cancer Cove", "Leo Lake"
+        ];
+        const earthNames = [
             "Crystal Lake", "Mirror Lake", "Emerald Lake", "Sapphire Lake", 
             "Alpine Lake", "Mountain Lake", "Clear Lake", "Blue Lake",
-            "Hidden Lake", "Tranquil Lake", "Serene Lake", "Peaceful Lake"
+            "Hidden Lake", "Tranquil Lake", "Serene Lake", "Peaceful Lake",
+            "Bear Lake", "Deer Lake", "Eagle Lake", "Fish Lake",
+            "Golden Lake", "Silver Lake", "Copper Lake", "Iron Lake",
+            "Jade Lake", "Onyx Lake", "Pearl Lake", "Ruby Lake",
+            "Diamond Lake", "Amethyst Lake", "Topaz Lake", "Garnet Lake",
+            "Opal Lake", "Turquoise Lake", "Coral Lake", "Ivory Lake",
+            "Sunset Lake", "Dawn Lake", "Twilight Lake", "Midnight Lake",
+            "Morning Lake", "Evening Lake", "Noon Lake", "Dusk Lake",
+            "Rainbow Lake", "Thunder Lake", "Lightning Lake", "Storm Lake",
+            "Calm Lake", "Rough Lake", "Deep Lake", "Shallow Lake",
+            "Long Lake", "Round Lake", "Wide Lake", "Narrow Lake"
         ];
-        return lakeNames[Math.floor(Math.random() * lakeNames.length)];
+        
+        const lakeNames = (window.gameMode === 'earth') ? earthNames : futuristicNames;
+        const available = lakeNames.filter(n => !this.usedLakeNames.has(n));
+        let name;
+        if (available.length > 0) {
+            name = available[Math.floor(Math.random() * available.length)];
+        } else {
+            name = `Lake ${this.usedLakeNames.size + 1}`;
+        }
+        this.usedLakeNames.add(name);
+        return name;
     }
     
     // Simple noise function (simplified Perlin noise)
@@ -876,12 +931,47 @@ class MountainGenerator {
     }
     
     generatePeakName() {
-        const peakNames = [
+        const futuristicNames = [
+            "Nebula Peak", "Starlight Spire", "Quantum Summit", "Aurora Pinnacle",
+            "Galactic Crest", "Nova Point", "Celestial Apex", "Photon Ridge",
+            "Gravity Bluff", "Cosmic Spire", "Astro Horn", "Plasma Heights",
+            "Pulsar Peak", "Void Vista", "Neutron Needle", "Fusion Face",
+            "Meteor Mesa", "Solar Summit", "Lunar Ledge", "Venus Vista",
+            "Mars Mesa", "Jupiter Junction", "Saturn Spire", "Uranus Uplands",
+            "Neptune Needle", "Pluto Peak", "Andromeda Apex", "Orion Overlook",
+            "Sirius Spire", "Vega Vista", "Polaris Peak", "Cassiopeia Crest",
+            "Lyra Ledge", "Cygnus Crest", "Aquila Apex", "Pegasus Peak",
+            "Centaurus Crest", "Draco Dome", "Hydra Heights", "Leo Ledge",
+            "Virgo Vista", "Libra Ledge", "Scorpius Spire", "Sagittarius Summit",
+            "Capricorn Crest", "Aquarius Apex", "Pisces Peak", "Aries Apex",
+            "Taurus Tower", "Gemini Gorge", "Cancer Crest", "Leo Ledge"
+        ];
+        const earthNames = [
             "Summit Peak", "Eagle Peak", "Thunder Peak", "Crystal Peak",
             "Alpine Peak", "Mountain Top", "High Point", "Vista Peak",
-            "Rocky Peak", "Granite Peak", "Snow Peak", "Cloud Peak"
+            "Rocky Peak", "Granite Peak", "Snow Peak", "Cloud Peak",
+            "Bear Peak", "Deer Peak", "Elk Peak", "Moose Peak",
+            "Wolf Peak", "Coyote Peak", "Fox Peak", "Lynx Peak",
+            "Golden Peak", "Silver Peak", "Copper Peak", "Iron Peak",
+            "Jade Peak", "Onyx Peak", "Pearl Peak", "Ruby Peak",
+            "Diamond Peak", "Amethyst Peak", "Topaz Peak", "Garnet Peak",
+            "Opal Peak", "Turquoise Peak", "Coral Peak", "Ivory Peak",
+            "Sunset Peak", "Dawn Peak", "Twilight Peak", "Midnight Peak",
+            "Morning Peak", "Evening Peak", "Noon Peak", "Dusk Peak",
+            "Rainbow Peak", "Thunder Peak", "Lightning Peak", "Storm Peak",
+            "Calm Peak", "Rough Peak", "Deep Peak", "Shallow Peak"
         ];
-        return peakNames[Math.floor(Math.random() * peakNames.length)];
+        
+        const peakNames = (window.gameMode === 'earth') ? earthNames : futuristicNames;
+        const available = peakNames.filter(n => !this.usedPeakNames.has(n));
+        let name;
+        if (available.length > 0) {
+            name = available[Math.floor(Math.random() * available.length)];
+        } else {
+            name = `Peak ${this.usedPeakNames.size + 1}`;
+        }
+        this.usedPeakNames.add(name);
+        return name;
     }
     
     findNearestLake(campsite) {

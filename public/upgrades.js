@@ -2,12 +2,12 @@
 class UpgradeManager {
     constructor() {
         this.gameState = null;
-        this.availableUpgrades = [
+        this.futuristicUpgrades = [
             {
                 id: 'better_trails',
                 name: 'Better Trail Markers',
                 description: 'Improve trail signage and safety',
-                cost: 3000,
+                cost: 15000,
                 happinessBonus: 5,
                 visitorBonus: 2,
                 category: 'trails'
@@ -16,7 +16,7 @@ class UpgradeManager {
                 id: 'emergency_equipment',
                 name: 'Emergency Equipment',
                 description: 'Add first aid and emergency supplies',
-                cost: 2000,
+                cost: 12000,
                 happinessBonus: 3,
                 visitorBonus: 1,
                 category: 'safety'
@@ -25,7 +25,7 @@ class UpgradeManager {
                 id: 'comfort_stations',
                 name: 'Comfort Stations',
                 description: 'Add clean restroom facilities',
-                cost: 5000,
+                cost: 25000,
                 happinessBonus: 8,
                 visitorBonus: 3,
                 category: 'facilities'
@@ -34,7 +34,7 @@ class UpgradeManager {
                 id: 'wifi_hotspots',
                 name: 'WiFi Hotspots',
                 description: 'Add internet connectivity',
-                cost: 4000,
+                cost: 20000,
                 happinessBonus: 6,
                 visitorBonus: 2,
                 category: 'technology'
@@ -43,7 +43,7 @@ class UpgradeManager {
                 id: 'solar_panels',
                 name: 'Solar Panels',
                 description: 'Add renewable energy sources',
-                cost: 8000,
+                cost: 40000,
                 happinessBonus: 10,
                 visitorBonus: 4,
                 category: 'sustainability'
@@ -52,7 +52,7 @@ class UpgradeManager {
                 id: 'picnic_areas',
                 name: 'Picnic Areas',
                 description: 'Add covered picnic shelters',
-                cost: 3500,
+                cost: 18000,
                 happinessBonus: 7,
                 visitorBonus: 2,
                 category: 'facilities'
@@ -61,7 +61,7 @@ class UpgradeManager {
                 id: 'wildlife_platforms',
                 name: 'Wildlife Viewing Platforms',
                 description: 'Add elevated viewing areas',
-                cost: 6000,
+                cost: 30000,
                 happinessBonus: 12,
                 visitorBonus: 3,
                 category: 'wildlife'
@@ -70,7 +70,7 @@ class UpgradeManager {
                 id: 'campground_kitchen',
                 name: 'Campground Kitchen',
                 description: 'Add communal cooking facilities',
-                cost: 4500,
+                cost: 22000,
                 happinessBonus: 9,
                 visitorBonus: 3,
                 category: 'facilities'
@@ -79,7 +79,7 @@ class UpgradeManager {
                 id: 'weather_station',
                 name: 'Weather Station',
                 description: 'Add weather monitoring equipment',
-                cost: 2500,
+                cost: 15000,
                 happinessBonus: 4,
                 visitorBonus: 1,
                 category: 'safety'
@@ -88,7 +88,7 @@ class UpgradeManager {
                 id: 'interpretive_signs',
                 name: 'Interpretive Signs',
                 description: 'Add educational signage',
-                cost: 1500,
+                cost: 8000,
                 happinessBonus: 6,
                 visitorBonus: 2,
                 category: 'education'
@@ -97,7 +97,7 @@ class UpgradeManager {
                 id: 'fire_pits',
                 name: 'Enhanced Fire Pits',
                 description: 'Add better fire pit facilities',
-                cost: 2000,
+                cost: 10000,
                 happinessBonus: 5,
                 visitorBonus: 2,
                 category: 'facilities'
@@ -106,12 +106,126 @@ class UpgradeManager {
                 id: 'water_filters',
                 name: 'Water Filtration',
                 description: 'Add advanced water purification',
-                cost: 3500,
+                cost: 18000,
                 happinessBonus: 7,
                 visitorBonus: 2,
                 category: 'facilities'
             }
         ];
+        
+        this.earthUpgrades = [
+            {
+                id: 'better_trails',
+                name: 'Better Trail Markers',
+                description: 'Improve trail signage and safety',
+                cost: 15000,
+                happinessBonus: 5,
+                visitorBonus: 2,
+                category: 'trails'
+            },
+            {
+                id: 'emergency_equipment',
+                name: 'Emergency Equipment',
+                description: 'Add first aid and emergency supplies',
+                cost: 12000,
+                happinessBonus: 3,
+                visitorBonus: 1,
+                category: 'safety'
+            },
+            {
+                id: 'comfort_stations',
+                name: 'Comfort Stations',
+                description: 'Add clean restroom facilities',
+                cost: 25000,
+                happinessBonus: 8,
+                visitorBonus: 3,
+                category: 'facilities'
+            },
+            {
+                id: 'cell_service',
+                name: 'Cell Service',
+                description: 'Add cellular connectivity',
+                cost: 20000,
+                happinessBonus: 6,
+                visitorBonus: 2,
+                category: 'technology'
+            },
+            {
+                id: 'solar_panels',
+                name: 'Solar Panels',
+                description: 'Add renewable energy sources',
+                cost: 40000,
+                happinessBonus: 10,
+                visitorBonus: 4,
+                category: 'sustainability'
+            },
+            {
+                id: 'picnic_areas',
+                name: 'Picnic Areas',
+                description: 'Add covered picnic shelters',
+                cost: 18000,
+                happinessBonus: 7,
+                visitorBonus: 2,
+                category: 'facilities'
+            },
+            {
+                id: 'wildlife_blinds',
+                name: 'Wildlife Viewing Blinds',
+                description: 'Add concealed viewing areas',
+                cost: 30000,
+                happinessBonus: 12,
+                visitorBonus: 3,
+                category: 'wildlife'
+            },
+            {
+                id: 'campground_kitchen',
+                name: 'Campground Kitchen',
+                description: 'Add communal cooking facilities',
+                cost: 22000,
+                happinessBonus: 9,
+                visitorBonus: 3,
+                category: 'facilities'
+            },
+            {
+                id: 'weather_station',
+                name: 'Weather Station',
+                description: 'Add weather monitoring equipment',
+                cost: 15000,
+                happinessBonus: 4,
+                visitorBonus: 1,
+                category: 'safety'
+            },
+            {
+                id: 'interpretive_signs',
+                name: 'Interpretive Signs',
+                description: 'Add educational signage',
+                cost: 8000,
+                happinessBonus: 6,
+                visitorBonus: 2,
+                category: 'education'
+            },
+            {
+                id: 'fire_pits',
+                name: 'Enhanced Fire Pits',
+                description: 'Add better fire pit facilities',
+                cost: 10000,
+                happinessBonus: 5,
+                visitorBonus: 2,
+                category: 'facilities'
+            },
+            {
+                id: 'water_filters',
+                name: 'Water Filtration',
+                description: 'Add advanced water purification',
+                cost: 18000,
+                happinessBonus: 7,
+                visitorBonus: 2,
+                category: 'facilities'
+            }
+        ];
+        
+        // Determine which upgrade list to use
+        this.availableUpgrades = (window.gameMode === 'earth') ? this.earthUpgrades : this.futuristicUpgrades;
     }
     
     setGameState(gameState) {
@@ -171,7 +285,7 @@ class UpgradeManager {
         const upgrade = this.getUpgradeById(campsite, upgradeId);
         if (!upgrade) return false;
         
-        const upgradeCost = upgrade.cost * 0.7; // 70% of original cost
+        const upgradeCost = upgrade.cost * 1.2; // Increased from 0.7 to 1.2 (120% of original cost)
         
         // Check if game is available
         if (!window.game || !window.game.getGameState) {

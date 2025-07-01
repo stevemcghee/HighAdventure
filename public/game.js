@@ -4,7 +4,7 @@ class HighAdventureGame {
         this.gameState = {
             year: 1,
             week: 1,
-            money: 50000,
+            money: 5000, // Reduced from 50000 to 5000
             totalVisitors: 0,
             avgHappiness: 50,
             weeklyVisitors: 0,
@@ -16,7 +16,9 @@ class HighAdventureGame {
             gamePhase: 'active', // 'active' or 'planning'
             autoProgress: false, // Changed to false initially
             planningChoices: [],
-            gameStarted: false // New state to track if game has started
+            gameStarted: false, // New state to track if game has started
+            weeklyExpenses: 0, // New: track weekly operational costs
+            maintenanceCosts: 0 // New: track maintenance costs
         };
         
         this.mountain = new MountainGenerator();
@@ -30,7 +32,17 @@ class HighAdventureGame {
     }
     
     init() {
-        console.log('Initializing High Adventure Game...');
+        console.log('Initializing Vacation Planet Manager AI...');
+        
+        // Don't generate mountain yet - wait for user mode selection
+        this.ui.initialize(this);
+        
+        console.log('AI Manager initialized successfully:', this);
+        this.addMessage("Welcome to Vacation Planet Manager! You are an AI assigned to manage a section of the popular hiking destination planet Terra Nova. Compete against other AIs to attract the most satisfied tourists and earn the highest ratings. Click 'Initialize AI Manager' to begin your management duties.");
+    }
+    
+    generateWorld() {
+        console.log('Generating world with mode:', window.gameMode);
         this.mountain.generateMountain();
         this.campsiteManager.generateCampsites(this.mountain);
         
@@ -42,12 +54,12 @@ class HighAdventureGame {
         
         // Ensure mountain is rendered with initial routes
         if (this.mountain) {
-            console.log('Rendering mountain with initial routes...');
+            console.log('Rendering planet terrain with initial routes...');
             this.mountain.render();
             
             // Force multiple renders to ensure routes are visible
             setTimeout(() => {
-                console.log('Re-rendering mountain to ensure initial routes are visible');
+                console.log('Re-rendering planet to ensure initial routes are visible');
                 this.mountain.render();
             }, 100);
             
@@ -73,25 +85,20 @@ class HighAdventureGame {
             this.upgradeManager.initializeUpgrades(campsite);
         });
         
-        this.ui.initialize(this);
-        
         // Update UI to show initial routes and trails
         this.ui.updateRoutesList();
         this.ui.updateTrailsList();
         
         // Don't start auto-progression automatically
         // this.startAutoProgress();
-        
-        console.log('Game initialized successfully:', this);
-        this.addMessage("Welcome to High Adventure! Click 'Start Game' to begin your backpacking camp adventure.");
     }
     
     createInitialRoutes() {
         const campsites = this.campsiteManager.getCampsites();
-        console.log(`Creating initial routes with ${campsites.length} campsites:`, campsites.map(c => c.name));
+        console.log(`Creating initial transportation network with ${campsites.length} resorts:`, campsites.map(c => c.name));
         
         if (campsites.length < 3) {
-            console.log('Not enough campsites to create initial routes');
+            console.log('Not enough resorts to create initial routes');
             return;
         }
         
@@ -126,7 +133,7 @@ class HighAdventureGame {
         if (route1 && route2 && route3) {
             console.log('Successfully created all initial routes:', route1, route2, route3);
             console.log(`Total routes in manager: ${this.routeManager.getRoutes().length}`);
-            this.addMessage(`Created initial trail network: ${route1.name} (${route1.distance}mi), ${route2.name} (${route2.distance}mi), and ${route3.name} (${route3.distance}mi)`);
+            this.addMessage(`Established initial transportation network: ${route1.name} (${route1.distance}km), ${route2.name} (${route2.distance}km), and ${route3.name} (${route3.distance}km)`);
         } else {
             console.log('Failed to create some initial routes');
             console.log('Route creation results:', { route1, route2, route3 });
@@ -137,7 +144,7 @@ class HighAdventureGame {
         if (!this.gameState.gameStarted) {
             this.gameState.gameStarted = true;
             this.gameState.autoProgress = true;
-            this.addMessage("Game started! Your backpacking camp is now open for visitors.");
+            this.addMessage("AI Manager activated! Your resort section is now open for tourists. Compete against other AIs to achieve the highest satisfaction ratings and revenue.");
             this.startAutoProgress();
             this.ui.updateStartButton();
         }
@@ -415,45 +422,73 @@ class HighAdventureGame {
     }
     
     processWeeklyVisitors() {
-        const baseVisitors = 10 + (this.gameState.year - 1) * 5;
-        const routeBonus = this.routeManager.getTotalRoutes() * 2;
+        const baseVisitors = 5 + (this.gameState.year - 1) * 2; // Increased back to reasonable levels
+        const routeBonus = this.routeManager.getTotalRoutes() * 1; // Increased back to 1 per route
         
         // Calculate activity and upgrade bonuses per campsite
         let totalActivityBonus = 0;
         let totalUpgradeBonus = 0;
         this.campsiteManager.getCampsites().forEach(campsite => {
-            totalActivityBonus += this.activityManager.getTotalActivitiesForCampsite(campsite) * 3;
-            totalUpgradeBonus += this.upgradeManager.getTotalVisitorBonusForCampsite(campsite);
+            totalActivityBonus += this.activityManager.getTotalActivitiesForCampsite(campsite) * 1; // Increased back to 1 per activity
+            totalUpgradeBonus += this.upgradeManager.getTotalVisitorBonusForCampsite(campsite) * 0.8; // Keep some reduction but not as harsh
         });
         
-        const staffBonus = this.gameState.staff.guides * 5;
+        const staffBonus = this.gameState.staff.guides * 2; // Increased back to 2 per guide
         
         this.gameState.weeklyVisitors = Math.floor(baseVisitors + routeBonus + totalActivityBonus + totalUpgradeBonus + staffBonus);
         this.gameState.totalVisitors += this.gameState.weeklyVisitors;
         
         // Calculate revenue
-        const basePrice = 50;
-        const routePrice = this.routeManager.getAverageRoutePrice();
+        const basePrice = 30; // Increased back to reasonable level
+        const routeQuality = this.routeManager.getAverageRouteQuality();
+        const routePrice = Math.floor(routeQuality * 0.4); // Slightly reduced but not as harsh
         this.gameState.weeklyRevenue = this.gameState.weeklyVisitors * (basePrice + routePrice);
-        this.gameState.money += this.gameState.weeklyRevenue;
+        
+        // Calculate weekly expenses
+        this.calculateWeeklyExpenses();
+        
+        // Apply revenue and expenses
+        this.gameState.money += this.gameState.weeklyRevenue - this.gameState.weeklyExpenses;
         
         // Calculate happiness
         this.calculateHappiness();
         
-        this.addMessage(`Week ${this.gameState.week}: ${this.gameState.weeklyVisitors} visitors, $${this.gameState.weeklyRevenue} revenue`);
+        this.addMessage(`Week ${this.gameState.week}: ${this.gameState.weeklyVisitors} visitors, $${this.gameState.weeklyRevenue} revenue, $${this.gameState.weeklyExpenses} expenses`);
     }
     
     processYearEnd() {
-        // Staff costs
-        const staffCost = (this.gameState.staff.guides * 5000) + (this.gameState.staff.maintenance * 3000);
+        // Staff costs (annual)
+        const staffCost = (this.gameState.staff.guides * 10000) + (this.gameState.staff.maintenance * 6000); // Increased annual costs
         this.gameState.money -= staffCost;
         
-        // Year-end bonuses
+        // Year-end bonuses (reduced)
         if (this.gameState.avgHappiness > 80) {
-            const bonus = Math.floor(this.gameState.totalVisitors * 10);
+            const bonus = Math.floor(this.gameState.totalVisitors * 2); // Reduced from 10 to 2
             this.gameState.money += bonus;
             this.addMessage(`High satisfaction bonus: +$${bonus}`);
         }
+    }
+    
+    calculateWeeklyExpenses() {
+        // Base operational costs
+        let expenses = 300; // Reduced from 800 to 300
+        
+        // Staff costs (weekly)
+        expenses += this.gameState.staff.guides * 200; // Reduced from 400 to 200
+        expenses += this.gameState.staff.maintenance * 150; // Reduced from 300 to 150
+        
+        // Maintenance costs for upgrades and facilities
+        let maintenanceCosts = 0;
+        this.campsiteManager.getCampsites().forEach(campsite => {
+            const upgrades = this.upgradeManager.getCampsiteUpgrades(campsite);
+            maintenanceCosts += upgrades.length * 75; // Reduced from 150 to 75
+        });
+        
+        // Route maintenance costs
+        maintenanceCosts += this.routeManager.getTotalRoutes() * 50; // Reduced from 100 to 50
+        
+        this.gameState.maintenanceCosts = maintenanceCosts;
+        this.gameState.weeklyExpenses = expenses + maintenanceCosts;
     }
     
     calculateHappiness() {
@@ -479,7 +514,7 @@ class HighAdventureGame {
     }
     
     hireStaff(type) {
-        const cost = type === 'guide' ? 5000 : 3000;
+        const cost = type === 'guide' ? 25000 : 15000; // Increased from 5000/3000 to 25000/15000
         if (this.gameState.money >= cost) {
             this.gameState.money -= cost;
             if (type === 'guide') {

@@ -4,6 +4,7 @@ class RouteManager {
         this.routes = [];
         this.routeIdCounter = 0;
         this.campsiteManager = null;
+        this.usedRouteNames = new Set();
     }
     
     setCampsiteManager(campsiteManager) {
@@ -93,7 +94,7 @@ class RouteManager {
     }
     
     generateRouteName(from, to, difficulty, distance) {
-        const trailNames = [
+        const futuristicNames = [
             'Eagle Ridge Trail', 'Bear Creek Path', 'Mountain Vista Way', 'Pine Ridge Route',
             'Crystal Lake Trail', 'Thunder Peak Path', 'Wildflower Ridge', 'Sunset Summit Trail',
             'Raven\'s Roost Route', 'Misty Valley Trail', 'Golden Eagle Path', 'Starlight Ridge',
@@ -103,18 +104,27 @@ class RouteManager {
             'Wilderness Way', 'Alpine Pass Trail', 'Mountain View Path', 'Crystal Ridge Route',
             'Eagle Peak Trail', 'Thunder Valley Path', 'Pine Summit Route', 'Bear Ridge Trail'
         ];
+        const earthNames = [
+            'Appalachian Trail', 'Pacific Crest Trail', 'Continental Divide Trail', 'John Muir Trail',
+            'Wonderland Trail', 'Tahoe Rim Trail', 'Long Trail', 'Ice Age Trail',
+            'Florida Trail', 'Arizona Trail', 'Benton MacKaye Trail', 'Foothills Trail',
+            'Bartram Trail', 'Pinhoti Trail', 'Benton MacKaye Trail', 'Foothills Trail',
+            'Mountains to Sea Trail', 'Art Loeb Trail', 'Foothills Trail', 'Bartram Trail',
+            'Pinhoti Trail', 'Benton MacKaye Trail', 'Foothills Trail', 'Mountains to Sea Trail',
+            'Art Loeb Trail', 'Foothills Trail', 'Bartram Trail', 'Pinhoti Trail',
+            'Benton MacKaye Trail', 'Foothills Trail', 'Mountains to Sea Trail', 'Art Loeb Trail'
+        ];
         
-        // Select a name based on difficulty and distance
-        let nameIndex = (this.routeIdCounter * 7) % trailNames.length; // Use route ID for variety
-        
-        // Adjust based on difficulty
-        if (difficulty === 'expert') {
-            nameIndex = (nameIndex + 10) % trailNames.length; // Use more dramatic names
-        } else if (difficulty === 'easy') {
-            nameIndex = (nameIndex + 5) % trailNames.length; // Use gentler names
+        const trailNames = (window.gameMode === 'earth') ? earthNames : futuristicNames;
+        const available = trailNames.filter(n => !this.usedRouteNames.has(n));
+        let name;
+        if (available.length > 0) {
+            name = available[Math.floor(Math.random() * available.length)];
+        } else {
+            name = `Trail ${this.usedRouteNames.size + 1}`;
         }
-        
-        return trailNames[nameIndex];
+        this.usedRouteNames.add(name);
+        return name;
     }
     
     generateRouteFeatures(difficulty, distance) {
@@ -188,7 +198,7 @@ class RouteManager {
     }
     
     calculateRouteCost(difficulty, distance) {
-        let baseCost = distance * 100; // $100 per mile base
+        let baseCost = distance * 500; // Increased from $100 to $500 per mile base
         
         // Difficulty multiplier
         switch (difficulty) {
