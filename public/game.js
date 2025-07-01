@@ -37,6 +37,11 @@ class HighAdventureGame {
         // Create initial connected routes
         this.createInitialRoutes();
         
+        // Ensure mountain is rendered with initial routes
+        if (this.mountain) {
+            this.mountain.render();
+        }
+        
         // Debug: Check if routeManager has the method
         console.log('RouteManager methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.routeManager)));
         console.log('RouteManager setCampsiteManager exists:', typeof this.routeManager.setCampsiteManager);
@@ -96,11 +101,6 @@ class HighAdventureGame {
         if (route1 && route2 && route3) {
             console.log('Created initial routes:', route1, route2, route3);
             this.addMessage(`Created initial trail network connecting ${campsites[0].name}, ${campsites[1].name}, and ${campsites[2].name}`);
-            
-            // Re-render the mountain to show the initial routes
-            if (this.mountain) {
-                this.mountain.render();
-            }
         } else {
             console.log('Failed to create some initial routes');
         }
