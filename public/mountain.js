@@ -29,7 +29,7 @@ class MountainGenerator {
         const containerWidth = container.clientWidth;
         
         // Calculate canvas size maintaining 3:2 aspect ratio
-        const maxWidth = Math.min(600, containerWidth);
+        const maxWidth = Math.min(1200, containerWidth);
         const width = maxWidth;
         const height = (width * 2) / 3; // 3:2 aspect ratio
         
@@ -103,15 +103,18 @@ class MountainGenerator {
     }
     
     generateMountain() {
+        console.log('Generating mountain...');
         this.generateTerrain();
+        console.log('Terrain generated, now generating lakes...');
         this.generateLakes();
+        console.log('Lakes generated, now rendering...');
         this.render();
     }
     
     generateTerrain() {
         // Generate height map using multiple noise layers
-        const terrainWidth = 100;
-        const terrainHeight = 100;
+        const terrainWidth = 200;
+        const terrainHeight = 200;
         
         this.terrain = [];
         for (let x = 0; x < terrainWidth; x++) {
@@ -125,14 +128,14 @@ class MountainGenerator {
                 const maxDistance = Math.sqrt(Math.pow(terrainWidth / 2, 2) + Math.pow(terrainHeight / 2, 2));
                 const normalizedDistance = distanceFromCenter / maxDistance;
                 
-                // Create mountain peak
-                let height = Math.max(0, 1 - normalizedDistance * 2);
-                height = Math.pow(height, 2); // Sharper peak
+                // Create mountain peak - smoother transitions
+                let height = Math.max(0, 1 - normalizedDistance * 1.5); // Less steep falloff
+                height = Math.pow(height, 1.5); // Less sharp peak
                 
-                // Add noise for realistic terrain
-                const noise1 = this.noise(x * 0.1, y * 0.1) * 0.3;
-                const noise2 = this.noise(x * 0.05, y * 0.05) * 0.2;
-                const noise3 = this.noise(x * 0.02, y * 0.02) * 0.1;
+                // Add noise for realistic terrain - reduced for smoother terrain
+                const noise1 = this.noise(x * 0.05, y * 0.05) * 0.15; // Reduced frequency and amplitude
+                const noise2 = this.noise(x * 0.02, y * 0.02) * 0.1;  // Reduced frequency and amplitude
+                const noise3 = this.noise(x * 0.01, y * 0.01) * 0.05; // Reduced frequency and amplitude
                 
                 height += noise1 + noise2 + noise3;
                 height = Math.max(0, Math.min(1, height));
@@ -147,20 +150,39 @@ class MountainGenerator {
         const terrainWidth = this.terrain.length;
         const terrainHeight = this.terrain[0].length;
         
+        console.log(`Terrain dimensions: ${terrainWidth}x${terrainHeight}`);
+        console.log(`Lakes array before generation: ${this.lakes.length}`);
+        
         // Generate 2-4 lakes
         const numLakes = Math.floor(Math.random() * 3) + 2;
+        console.log(`Attempting to generate ${numLakes} lakes...`);
+        
+        // Find the minimum and maximum terrain heights for debugging
+        let minHeight = 1;
+        let maxHeight = 0;
+        for (let x = 0; x < terrainWidth; x++) {
+            for (let y = 0; y < terrainHeight; y++) {
+                minHeight = Math.min(minHeight, this.terrain[x][y]);
+                maxHeight = Math.max(maxHeight, this.terrain[x][y]);
+            }
+        }
+        console.log(`Terrain height range: ${minHeight.toFixed(3)} to ${maxHeight.toFixed(3)}`);
         
         for (let i = 0; i < numLakes; i++) {
             // Find suitable lake locations (low elevation areas)
             let attempts = 0;
             let lakeX, lakeY;
             
-            while (attempts < 50) {
+            while (attempts < 100) {
                 lakeX = Math.floor(Math.random() * terrainWidth);
                 lakeY = Math.floor(Math.random() * terrainHeight);
                 
                 // Check if this is a low elevation area suitable for a lake
-                if (this.terrain[lakeX][lakeY] < 0.3) {
+                // Use a more generous threshold based on actual terrain
+                const heightThreshold = minHeight + (maxHeight - minHeight) * 0.3;
+                console.log(`Checking position (${lakeX}, ${lakeY}), height: ${this.terrain[lakeX][lakeY].toFixed(3)}, threshold: ${heightThreshold.toFixed(3)}`);
+                
+                if (this.terrain[lakeX][lakeY] < heightThreshold) {
                     // Check if it's not too close to existing lakes
                     let tooClose = false;
                     for (const lake of this.lakes) {
@@ -181,36 +203,59 @@ class MountainGenerator {
                 attempts++;
             }
             
-            if (attempts < 50) {
-                // Create lake with random size
-                const lakeSize = Math.floor(Math.random() * 8) + 4; // 4-12 cells radius
+            if (attempts < 100) {
+                // Create lake with varied size and shape
+                const baseSize = Math.floor(Math.random() * 4) + 2; // 2-6 cells base size
                 const lake = {
                     x: lakeX,
                     y: lakeY,
-                    radius: lakeSize,
+                    baseSize: baseSize,
+                    shape: Math.random() > 0.5 ? 'oval' : 'irregular',
                     name: this.generateLakeName()
                 };
                 
                 this.lakes.push(lake);
+                console.log(`Created lake: ${lake.name} at (${lakeX}, ${lakeY}) with base size ${baseSize}, shape: ${lake.shape}, terrain height: ${this.terrain[lakeX][lakeY].toFixed(3)}`);
                 
                 // Lower the terrain around the lake to create a basin
-                for (let dx = -lakeSize; dx <= lakeSize; dx++) {
-                    for (let dy = -lakeSize; dy <= lakeSize; dy++) {
+                const maxRadius = baseSize + Math.floor(Math.random() * 3); // Vary the actual size
+                for (let dx = -maxRadius; dx <= maxRadius; dx++) {
+                    for (let dy = -maxRadius; dy <= maxRadius; dy++) {
                         const nx = lakeX + dx;
                         const ny = lakeY + dy;
                         
                         if (nx >= 0 && nx < terrainWidth && ny >= 0 && ny < terrainHeight) {
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            if (distance <= lakeSize) {
+                            let distance;
+                            
+                            if (lake.shape === 'oval') {
+                                // Oval shape - stretch in one direction
+                                const stretchFactor = 0.7 + Math.random() * 0.6; // 0.7 to 1.3
+                                const angle = Math.random() * Math.PI * 2;
+                                const dxStretched = dx * Math.cos(angle) + dy * Math.sin(angle);
+                                const dyStretched = -dx * Math.sin(angle) + dy * Math.cos(angle);
+                                distance = Math.sqrt((dxStretched / stretchFactor) ** 2 + (dyStretched * stretchFactor) ** 2);
+                            } else {
+                                // Irregular shape - add some randomness
+                                const baseDistance = Math.sqrt(dx * dx + dy * dy);
+                                const irregularity = Math.random() * 0.4 + 0.8; // 0.8 to 1.2
+                                distance = baseDistance * irregularity;
+                            }
+                            
+                            if (distance <= baseSize) {
                                 // Create a basin effect
-                                const basinDepth = Math.max(0, (lakeSize - distance) / lakeSize * 0.4);
+                                const basinDepth = Math.max(0, (baseSize - distance) / baseSize * 0.25);
                                 this.terrain[nx][ny] = Math.max(0, this.terrain[nx][ny] - basinDepth);
                             }
                         }
                     }
                 }
+            } else {
+                console.log(`Failed to find suitable location for lake ${i + 1} after 100 attempts`);
             }
         }
+        
+        console.log(`Generated ${this.lakes.length} lakes total`);
+        console.log(`Lakes array after generation:`, this.lakes);
     }
     
     generateLakeName() {
@@ -283,8 +328,14 @@ class MountainGenerator {
         // Draw lakes
         this.drawLakes();
         
+        // Draw day hikes (before campsites so they appear behind)
+        this.drawDayHikes();
+        
         // Draw campsites
         this.drawCampsites();
+        
+        // Draw peaks
+        this.drawPeaks();
         
         // Draw routes
         this.drawRoutes();
@@ -318,11 +369,25 @@ class MountainGenerator {
                 // Check if this pixel is part of a lake
                 let isLake = false;
                 for (const lake of this.lakes) {
-                    const distance = Math.sqrt(
-                        Math.pow(x - lake.x, 2) + 
-                        Math.pow(y - lake.y, 2)
-                    );
-                    if (distance <= lake.radius) {
+                    const dx = x - lake.x;
+                    const dy = y - lake.y;
+                    let distance;
+                    
+                    if (lake.shape === 'oval') {
+                        // Oval shape - stretch in one direction
+                        const stretchFactor = 0.7 + Math.random() * 0.6; // 0.7 to 1.3
+                        const angle = Math.random() * Math.PI * 2;
+                        const dxStretched = dx * Math.cos(angle) + dy * Math.sin(angle);
+                        const dyStretched = -dx * Math.sin(angle) + dy * Math.cos(angle);
+                        distance = Math.sqrt((dxStretched / stretchFactor) ** 2 + (dyStretched * stretchFactor) ** 2);
+                    } else {
+                        // Irregular shape - add some randomness
+                        const baseDistance = Math.sqrt(dx * dx + dy * dy);
+                        const irregularity = Math.random() * 0.4 + 0.8; // 0.8 to 1.2
+                        distance = baseDistance * irregularity;
+                    }
+                    
+                    if (distance <= lake.baseSize) {
                         isLake = true;
                         break;
                     }
@@ -332,40 +397,38 @@ class MountainGenerator {
                 let color;
                 
                 if (isLake) {
-                    // Lake - various shades of blue
-                    const blueIntensity = Math.floor(100 + Math.random() * 100);
-                    const greenIntensity = Math.floor(50 + Math.random() * 50);
-                    const redIntensity = Math.floor(20 + Math.random() * 30);
-                    color = `rgb(${redIntensity}, ${greenIntensity}, ${blueIntensity})`;
-                } else if (height > 0.85) {
-                    // Snow peaks - white with slight blue tint
-                    const snowIntensity = Math.floor(200 + height * 55);
-                    color = `rgb(${snowIntensity}, ${snowIntensity}, ${snowIntensity + 20})`;
+                    // Lake - bright light blue
+                    color = `rgb(135, 206, 235)`; // Sky blue
+                } else if (height > 0.9) {
+                    // Snow peaks - white
+                    color = `rgb(255, 255, 255)`;
+                } else if (height > 0.8) {
+                    // High alpine - light gray
+                    color = `rgb(200, 200, 200)`;
                 } else if (height > 0.7) {
-                    // Rocky peaks - gray to brown
-                    const rockIntensity = Math.floor(100 + height * 80);
-                    color = `rgb(${rockIntensity}, ${rockIntensity - 20}, ${rockIntensity - 40})`;
-                } else if (height > 0.55) {
-                    // Alpine meadows - light green to yellow
-                    const green = Math.floor(120 + height * 80);
-                    const red = Math.floor(100 + height * 60);
-                    const blue = Math.floor(40 + height * 40);
-                    color = `rgb(${red}, ${green}, ${blue})`;
-                } else if (height > 0.35) {
-                    // Forest - various shades of green
-                    const green = Math.floor(60 + height * 120);
-                    const red = Math.floor(20 + height * 40);
-                    const blue = Math.floor(10 + height * 30);
-                    color = `rgb(${red}, ${green}, ${blue})`;
+                    // Alpine zone - tan/brown
+                    color = `rgb(180, 160, 140)`;
+                } else if (height > 0.6) {
+                    // Subalpine - light brown
+                    color = `rgb(160, 140, 120)`;
+                } else if (height > 0.5) {
+                    // Upper forest - medium brown
+                    color = `rgb(140, 120, 100)`;
+                } else if (height > 0.4) {
+                    // Mid forest - dark brown
+                    color = `rgb(120, 100, 80)`;
+                } else if (height > 0.3) {
+                    // Lower forest - very dark brown
+                    color = `rgb(100, 80, 60)`;
                 } else if (height > 0.2) {
-                    // Foothills - brown to green transition
-                    const brown = Math.floor(80 + height * 60);
-                    const green = Math.floor(40 + height * 80);
-                    const red = Math.floor(60 + height * 40);
-                    color = `rgb(${red}, ${green}, ${brown})`;
+                    // Foothills - dark green-brown
+                    color = `rgb(80, 100, 60)`;
+                } else if (height > 0.1) {
+                    // Lowlands - medium green
+                    color = `rgb(60, 120, 60)`;
                 } else {
-                    // Base/lowlands - basic grass green
-                    color = `rgb(34, 139, 34)`;
+                    // Valley floor - light green
+                    color = `rgb(100, 140, 100)`;
                 }
                 
                 // Draw square pixel with exact boundaries
@@ -376,9 +439,15 @@ class MountainGenerator {
     }
     
     drawLakes() {
-        this.lakes.forEach(lake => {
-            const x = lake.x * (this.width / 100);
-            const y = lake.y * (this.height / 100);
+        console.log(`Drawing ${this.lakes.length} lakes...`);
+        console.log(`Lakes array in drawLakes:`, this.lakes);
+        console.log(`Canvas dimensions: ${this.width}x${this.height}`);
+        
+        this.lakes.forEach((lake, index) => {
+            const x = lake.x * (this.width / 200);
+            const y = lake.y * (this.height / 200);
+            
+            console.log(`Drawing lake ${index + 1}: ${lake.name} at screen position (${x}, ${y}) from terrain position (${lake.x}, ${lake.y})`);
             
             // Draw lake name
             this.ctx.fillStyle = '#0066cc';
@@ -390,8 +459,8 @@ class MountainGenerator {
     
     drawCampsites() {
         this.campsites.forEach(campsite => {
-            const x = campsite.x * (this.width / 100);
-            const y = campsite.y * (this.height / 100);
+            const x = campsite.x * (this.width / 200);
+            const y = campsite.y * (this.height / 200);
             
             // Draw campsite marker
             this.ctx.fillStyle = '#ff6b6b';
@@ -433,10 +502,10 @@ class MountainGenerator {
             if (fromCampsite && toCampsite) {
                 console.log(`Drawing route ${index + 1}: ${route.from} -> ${route.to} (${route.difficulty})`);
                 
-                const fromX = fromCampsite.x * (this.width / 100);
-                const fromY = fromCampsite.y * (this.height / 100);
-                const toX = toCampsite.x * (this.width / 100);
-                const toY = toCampsite.y * (this.height / 100);
+                const fromX = fromCampsite.x * (this.width / 200);
+                const fromY = fromCampsite.y * (this.height / 200);
+                const toX = toCampsite.x * (this.width / 200);
+                const toY = toCampsite.y * (this.height / 200);
                 
                 // Use A* pathfinding to avoid steep terrain
                 const pathPoints = this.generateAStarPath(fromX, fromY, toX, toY);
@@ -483,7 +552,7 @@ class MountainGenerator {
     
     // A* pathfinding on the terrain grid to avoid steep elevation changes
     generateAStarPath(fromX, fromY, toX, toY) {
-        const gridSize = 100;
+        const gridSize = 200; // Use actual terrain size
         const start = {
             x: Math.round(fromX * gridSize / this.width),
             y: Math.round(fromY * gridSize / this.height)
@@ -637,6 +706,8 @@ class MountainGenerator {
     
     addCampsite(campsite) {
         this.campsites.push(campsite);
+        // Regenerate day hikes when campsites are added
+        this.generateDayHikes();
         this.render();
     }
     
@@ -645,13 +716,311 @@ class MountainGenerator {
     }
     
     getTerrainHeight(x, y) {
-        const terrainX = Math.floor(x * 100 / this.width);
-        const terrainY = Math.floor(y * 100 / this.height);
+        // Convert screen coordinates to terrain coordinates (200x200 terrain)
+        const terrainX = Math.floor(x);
+        const terrainY = Math.floor(y);
         
         if (terrainX >= 0 && terrainX < this.terrain.length && 
             terrainY >= 0 && terrainY < this.terrain[0].length) {
             return this.terrain[terrainX][terrainY];
         }
         return 0;
+    }
+    
+    generateDayHikes() {
+        this.dayHikes = [];
+        
+        console.log(`Generating day hikes for ${this.campsites.length} campsites...`);
+        
+        // Find mountain peaks (high elevation areas)
+        this.peaks = this.findMountainPeaks();
+        console.log(`Found ${this.peaks.length} mountain peaks for day hikes`);
+        
+        // Generate day hikes for each campsite
+        this.campsites.forEach(campsite => {
+            // Find nearest lake
+            const nearestLake = this.findNearestLake(campsite);
+            
+            // Find nearest peak
+            const nearestPeak = this.findNearestPeak(campsite, this.peaks);
+            
+            // Create day hikes (prefer lakes over peaks if they're similar distance)
+            if (nearestLake && nearestPeak) {
+                const lakeDistance = this.calculateDistance(campsite, nearestLake);
+                const peakDistance = this.calculateDistance(campsite, nearestPeak);
+                
+                // Convert to miles (using same scale as routes: 1 unit = 0.019 * 3 miles)
+                const lakeDistanceMiles = lakeDistance * 0.019 * 3;
+                const peakDistanceMiles = peakDistance * 0.019 * 3;
+                
+                // Only create hikes if they're 10 miles or less
+                if (lakeDistanceMiles <= 10 && peakDistanceMiles <= 10) {
+                    // Choose the closer destination, or lake if distances are similar
+                    if (lakeDistance <= peakDistance * 1.2) {
+                        this.dayHikes.push({
+                            from: campsite,
+                            to: nearestLake,
+                            type: 'lake',
+                            distance: lakeDistance,
+                            name: `${campsite.name} to ${nearestLake.name}`
+                        });
+                    } else {
+                        this.dayHikes.push({
+                            from: campsite,
+                            to: nearestPeak,
+                            type: 'peak',
+                            distance: peakDistance,
+                            name: `${campsite.name} to ${nearestPeak.name}`
+                        });
+                    }
+                } else if (lakeDistanceMiles <= 10) {
+                    // Only lake is within 10 miles
+                    this.dayHikes.push({
+                        from: campsite,
+                        to: nearestLake,
+                        type: 'lake',
+                        distance: lakeDistance,
+                        name: `${campsite.name} to ${nearestLake.name}`
+                    });
+                } else if (peakDistanceMiles <= 10) {
+                    // Only peak is within 10 miles
+                    this.dayHikes.push({
+                        from: campsite,
+                        to: nearestPeak,
+                        type: 'peak',
+                        distance: peakDistance,
+                        name: `${campsite.name} to ${nearestPeak.name}`
+                    });
+                } else {
+                    console.log(`No suitable day hikes for ${campsite.name} - nearest lake: ${lakeDistanceMiles.toFixed(1)}mi, nearest peak: ${peakDistanceMiles.toFixed(1)}mi`);
+                }
+            } else if (nearestLake) {
+                const lakeDistance = this.calculateDistance(campsite, nearestLake);
+                const lakeDistanceMiles = lakeDistance * 0.019 * 3;
+                
+                if (lakeDistanceMiles <= 10) {
+                    this.dayHikes.push({
+                        from: campsite,
+                        to: nearestLake,
+                        type: 'lake',
+                        distance: lakeDistance,
+                        name: `${campsite.name} to ${nearestLake.name}`
+                    });
+                } else {
+                    console.log(`Lake hike too long for ${campsite.name}: ${lakeDistanceMiles.toFixed(1)}mi`);
+                }
+            } else if (nearestPeak) {
+                const peakDistance = this.calculateDistance(campsite, nearestPeak);
+                const peakDistanceMiles = peakDistance * 0.019 * 3;
+                
+                if (peakDistanceMiles <= 10) {
+                    this.dayHikes.push({
+                        from: campsite,
+                        to: nearestPeak,
+                        type: 'peak',
+                        distance: peakDistance,
+                        name: `${campsite.name} to ${nearestPeak.name}`
+                    });
+                } else {
+                    console.log(`Peak hike too long for ${campsite.name}: ${peakDistanceMiles.toFixed(1)}mi`);
+                }
+            }
+        });
+        
+        console.log(`Generated ${this.dayHikes.length} day hikes`);
+    }
+    
+    findMountainPeaks() {
+        const peaks = [];
+        const terrainWidth = this.terrain.length;
+        const terrainHeight = this.terrain[0].length;
+        
+        // Find local maxima (peaks)
+        for (let x = 2; x < terrainWidth - 2; x++) {
+            for (let y = 2; y < terrainHeight - 2; y++) {
+                const height = this.terrain[x][y];
+                
+                // Check if this is a local maximum (higher than surrounding cells)
+                let isPeak = true;
+                for (let dx = -2; dx <= 2; dx++) {
+                    for (let dy = -2; dy <= 2; dy++) {
+                        if (dx === 0 && dy === 0) continue;
+                        
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (nx >= 0 && nx < terrainWidth && ny >= 0 && ny < terrainHeight) {
+                            if (this.terrain[nx][ny] >= height) {
+                                isPeak = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (!isPeak) break;
+                }
+                
+                // Must be high enough to be considered a peak
+                if (isPeak && height > 0.8) {
+                    peaks.push({
+                        x: x,
+                        y: y,
+                        height: height,
+                        name: this.generatePeakName()
+                    });
+                }
+            }
+        }
+        
+        // Limit to top 3-5 peaks to avoid overcrowding
+        peaks.sort((a, b) => b.height - a.height);
+        return peaks.slice(0, Math.min(5, peaks.length));
+    }
+    
+    generatePeakName() {
+        const peakNames = [
+            "Summit Peak", "Eagle Peak", "Thunder Peak", "Crystal Peak",
+            "Alpine Peak", "Mountain Top", "High Point", "Vista Peak",
+            "Rocky Peak", "Granite Peak", "Snow Peak", "Cloud Peak"
+        ];
+        return peakNames[Math.floor(Math.random() * peakNames.length)];
+    }
+    
+    findNearestLake(campsite) {
+        if (this.lakes.length === 0) return null;
+        
+        let nearestLake = null;
+        let minDistance = Infinity;
+        
+        this.lakes.forEach(lake => {
+            const distance = this.calculateDistance(campsite, lake);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestLake = lake;
+            }
+        });
+        
+        return nearestLake;
+    }
+    
+    findNearestPeak(campsite, peaks) {
+        if (peaks.length === 0) return null;
+        
+        let nearestPeak = null;
+        let minDistance = Infinity;
+        
+        peaks.forEach(peak => {
+            const distance = this.calculateDistance(campsite, peak);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestPeak = peak;
+            }
+        });
+        
+        return nearestPeak;
+    }
+    
+    calculateDistance(point1, point2) {
+        const dx = point1.x - point2.x;
+        const dy = point1.y - point2.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    drawDayHikes() {
+        if (!this.dayHikes || this.dayHikes.length === 0) {
+            return;
+        }
+        
+        console.log(`Drawing ${this.dayHikes.length} day hikes...`);
+        
+        this.dayHikes.forEach((hike, index) => {
+            const fromX = hike.from.x * (this.width / 200);
+            const fromY = hike.from.y * (this.height / 200);
+            const toX = hike.to.x * (this.width / 200);
+            const toY = hike.to.y * (this.height / 200);
+            
+            console.log(`Drawing day hike ${index + 1}: ${hike.name} (${hike.type})`);
+            
+            // Set up dotted line style
+            this.ctx.setLineDash([5, 5]); // 5px dash, 5px gap
+            this.ctx.lineCap = 'round';
+            
+            // Choose color based on hike type
+            if (hike.type === 'lake') {
+                this.ctx.strokeStyle = '#0066cc'; // Blue for lake hikes
+            } else {
+                this.ctx.strokeStyle = '#8b4513'; // Brown for peak hikes
+            }
+            
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(fromX, fromY);
+            this.ctx.lineTo(toX, toY);
+            this.ctx.stroke();
+            
+            // Reset line dash
+            this.ctx.setLineDash([]);
+            
+            // Draw hike label
+            this.ctx.fillStyle = '#333';
+            this.ctx.font = 'italic 9px Arial';
+            this.ctx.textAlign = 'center';
+            const midX = (fromX + toX) / 2;
+            const midY = (fromY + toY) / 2;
+            
+            // Draw hike name
+            this.ctx.fillText(hike.name, midX, midY - 5);
+            
+            // Draw distance
+            const distanceInMiles = Math.round(hike.distance * 0.019 * 3 * 10) / 10; // Convert to miles
+            this.ctx.font = '8px Arial';
+            this.ctx.fillText(`${distanceInMiles}mi`, midX, midY + 5);
+        });
+    }
+    
+    drawPeaks() {
+        if (!this.peaks || this.peaks.length === 0) {
+            return;
+        }
+        
+        console.log(`Drawing ${this.peaks.length} mountain peaks...`);
+        
+        this.peaks.forEach((peak, index) => {
+            const x = peak.x * (this.width / 200);
+            const y = peak.y * (this.height / 200);
+            
+            console.log(`Drawing peak ${index + 1}: ${peak.name} at (${x}, ${y})`);
+            
+            // Draw peak marker (triangle shape)
+            this.ctx.fillStyle = '#8b4513'; // Brown color for peaks
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y - 10);
+            this.ctx.lineTo(x - 8, y + 8);
+            this.ctx.lineTo(x + 8, y + 8);
+            this.ctx.closePath();
+            this.ctx.fill();
+            
+            // Draw peak border
+            this.ctx.strokeStyle = '#fff';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            
+            // Draw peak name
+            this.ctx.fillStyle = '#333';
+            this.ctx.font = 'bold 10px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(peak.name, x, y + 25);
+            
+            // Draw elevation
+            const elevation = Math.round(peak.height * 8000 + 2000);
+            this.ctx.font = '9px Arial';
+            this.ctx.fillText(`${elevation}ft`, x, y + 35);
+        });
+    }
+    
+    getDayHikes() {
+        return this.dayHikes || [];
+    }
+    
+    getPeaks() {
+        return this.peaks || [];
     }
 } 

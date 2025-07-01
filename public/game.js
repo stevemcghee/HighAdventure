@@ -31,8 +31,11 @@ class HighAdventureGame {
     
     init() {
         console.log('Initializing High Adventure Game...');
-        this.mountain.generateTerrain();
+        this.mountain.generateMountain();
         this.campsiteManager.generateCampsites(this.mountain);
+        
+        // Generate day hikes after campsites are added
+        this.mountain.generateDayHikes();
         
         // Create initial connected routes
         this.createInitialRoutes();
@@ -72,8 +75,9 @@ class HighAdventureGame {
         
         this.ui.initialize(this);
         
-        // Update UI to show initial routes
+        // Update UI to show initial routes and trails
         this.ui.updateRoutesList();
+        this.ui.updateTrailsList();
         
         // Don't start auto-progression automatically
         // this.startAutoProgress();
@@ -96,21 +100,27 @@ class HighAdventureGame {
         const route1 = this.routeManager.createRoute(
             campsites[0].name, 
             campsites[1].name, 
-            'moderate'
+            'moderate',
+            null,
+            this.mountain
         );
         
         console.log('Creating initial route 2...');
         const route2 = this.routeManager.createRoute(
             campsites[1].name, 
             campsites[2].name, 
-            'easy'
+            'easy',
+            null,
+            this.mountain
         );
         
         console.log('Creating initial route 3...');
         const route3 = this.routeManager.createRoute(
             campsites[2].name, 
             campsites[0].name, 
-            'difficult'
+            'difficult',
+            null,
+            this.mountain
         );
         
         if (route1 && route2 && route3) {
@@ -210,7 +220,7 @@ class HighAdventureGame {
                     cost: 2000,
                     effect: '+2 visitors per week',
                     action: () => {
-                        const route = this.routeManager.createRoute(routePair.from, routePair.to, 'moderate');
+                        const route = this.routeManager.createRoute(routePair.from, routePair.to, 'moderate', null, this.mountain);
                         if (route) {
                             this.addMessage(`Created new trail: ${route.name} (${route.distance}mi)`);
                             // Re-render the mountain to show the new route
@@ -493,8 +503,7 @@ class HighAdventureGame {
     }
     
     updateUI() {
-        this.ui.updateGameStats(this.gameState);
-        this.ui.updateStaffCount(this.gameState.staff);
+        this.ui.updateAll();
     }
     
     getGameState() {
@@ -676,8 +685,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.multiplayerClient && window.game) {
                 window.game.setMultiplayerClient(window.multiplayerClient);
                 console.log('Multiplayer client connected to game');
+            } else {
+                console.log('Waiting for multiplayer client to be available...');
+                // Try again after a short delay
+                setTimeout(() => {
+                    if (window.multiplayerClient && window.game) {
+                        window.game.setMultiplayerClient(window.multiplayerClient);
+                        console.log('Multiplayer client connected to game (retry)');
+                    }
+                }, 1000);
             }
-        }, 2000);
+        }, 1000);
     } catch (error) {
         console.error('Error initializing game:', error);
     }

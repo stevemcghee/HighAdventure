@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Day Hikes Feature</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .mountain-view {
+            text-align: center;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+        .view-controls {
+            margin: 10px 0;
+        }
+        .view-controls button {
+            margin: 0 5px;
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .view-controls button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Day Hikes Feature Test</h1>
+        
+        <div class="info">
+            <h3>What to look for:</h3>
+            <ul>
+                <li><strong>Dotted lines</strong> connecting campsites to nearest lakes (blue) or mountain peaks (brown)</li>
+                <li><strong>Mountain peaks</strong> marked with brown triangles and names</li>
+                <li><strong>Day hike labels</strong> showing the route name and distance</li>
+                <li><strong>Lakes</strong> in blue with names</li>
+                <li><strong>Campsites</strong> as red circles</li>
+            </ul>
+        </div>
+        
+        <div class="mountain-view">
+            <canvas id="mountainCanvas" width="1200" height="800"></canvas>
+            <div class="view-controls">
+                <button id="zoomIn">🔍+</button>
+                <button id="zoomOut">🔍-</button>
+                <button id="resetView">🏔️ Reset</button>
+            </div>
+        </div>
+        
+        <div class="info">
+            <h3>Legend:</h3>
+            <ul>
+                <li><span style="color: #0066cc;">Blue dotted lines</span> = Day hikes to lakes</li>
+                <li><span style="color: #8b4513;">Brown dotted lines</span> = Day hikes to mountain peaks</li>
+                <li><span style="color: #8b4513;">Brown triangles</span> = Mountain peaks</li>
+                <li><span style="color: #ff6b6b;">Red circles</span> = Campsites</li>
+                <li><span style="color: #0066cc;">Blue areas</span> = Lakes</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="public/mountain.js"></script>
+    <script src="public/campsites.js"></script>
+    <script src="public/routes.js"></script>
+    <script src="public/activities.js"></script>
+    <script src="public/upgrades.js"></script>
+    <script src="public/game.js"></script>
+    
+    <script>
+        // Test the day hikes feature
+        function testDayHikes() {
+            console.log('Testing day hikes feature...');
+            
+            try {
+                // Create mountain and generate terrain
+                const mountain = new MountainGenerator();
+                mountain.generateMountain();
+                
+                // Generate campsites
+                const campsiteManager = new CampsiteManager();
+                campsiteManager.generateCampsites(mountain);
+                
+                // Generate day hikes after campsites are added
+                mountain.generateDayHikes();
+                
+                console.log('Mountain generated successfully');
+                console.log('Campsites:', mountain.getCampsites().length);
+                console.log('Lakes:', mountain.lakes.length);
+                console.log('Peaks:', mountain.peaks ? mountain.peaks.length : 0);
+                console.log('Day hikes:', mountain.dayHikes ? mountain.dayHikes.length : 0);
+                
+                // Log day hike details
+                if (mountain.dayHikes) {
+                    mountain.dayHikes.forEach((hike, index) => {
+                        const distanceInMiles = Math.round(hike.distance * 0.2 * 10) / 10;
+                        console.log(`Day hike ${index + 1}: ${hike.name} (${hike.type}) - ${distanceInMiles} miles`);
+                    });
+                } else {
+                    console.log('No day hikes generated (all were longer than 10 miles)');
+                }
+                
+            } catch (error) {
+                console.error('Error testing day hikes:', error);
+            }
+        }
+        
+        // Run test when page loads
+        window.addEventListener('load', testDayHikes);
+    </script>
+</body>
+</html> 

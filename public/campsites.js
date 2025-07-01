@@ -11,7 +11,7 @@ class CampsiteManager {
     }
     
     generateCampsites(mountain) {
-        const numCampsites = 6 + Math.floor(Math.random() * 3);
+        const numCampsites = 12 + Math.floor(Math.random() * 6);
         
         for (let i = 0; i < numCampsites; i++) {
             const campsite = this.createCampsite(i, mountain);
@@ -25,8 +25,8 @@ class CampsiteManager {
         const maxAttempts = 100;
         
         do {
-            x = 10 + Math.random() * 80;
-            y = 10 + Math.random() * 80;
+            x = 20 + Math.random() * 160; // Use full 200x200 terrain (20-180 range)
+            y = 20 + Math.random() * 160; // Use full 200x200 terrain (20-180 range)
             attempts++;
         } while (this.isTooCloseToExisting(x, y) && attempts < maxAttempts);
         

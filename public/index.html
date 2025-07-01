@@ -40,11 +40,47 @@
         <div class="main-content">
             <div class="left-panel">
                 <div class="mountain-view">
-                    <canvas id="mountainCanvas" width="600" height="400"></canvas>
+                    <canvas id="mountainCanvas" width="1200" height="800"></canvas>
                     <div class="view-controls">
                         <button id="zoomIn">🔍+</button>
                         <button id="zoomOut">🔍-</button>
                         <button id="resetView">🏔️ Reset</button>
+                    </div>
+                    <div class="trail-legend">
+                        <h4>Trail Difficulty Legend</h4>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <div class="legend-color easy"></div>
+                                <span>Easy</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color moderate"></div>
+                                <span>Moderate</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color difficult"></div>
+                                <span>Difficult</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color expert"></div>
+                                <span>Expert</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color day-hike-lake"></div>
+                                <span>Day Hike (Lake)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color day-hike-peak"></div>
+                                <span>Day Hike (Peak)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="trails-list">
+                    <h3>Trail Network</h3>
+                    <div id="trails-container">
+                        <p>No trails created yet. Create routes to see them here!</p>
                     </div>
                 </div>
                 

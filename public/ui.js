@@ -255,10 +255,11 @@ class GameUI {
             return;
         }
         
-        const route = this.game.getRouteManager().createRoute(from, to, difficulty);
+        const route = this.game.getRouteManager().createRoute(from, to, difficulty, null, this.game.getMountain());
         if (route) {
             this.addMessage(`Created ${route.name} (${route.distance}mi) for $${route.cost}`);
             this.updateRoutesList();
+            this.updateTrailsList();
             
             // Ensure mountain re-renders to show the new route
             const mountain = this.game.getMountain();
@@ -289,6 +290,7 @@ class GameUI {
         this.updateStartButton();
         this.updateControlButtons(this.game.getGameState());
         this.updateRoutesList();
+        this.updateTrailsList();
         this.updateActivitiesList();
         this.updateUpgradesList();
         if (this.selectedCampsite) {
@@ -494,6 +496,117 @@ class GameUI {
         html += '</div>';
         
         routesList.innerHTML = html;
+    }
+    
+    updateTrailsList() {
+        const trailsContainer = document.getElementById('trails-container');
+        const routes = this.game.getRouteManager().getRoutes();
+        const dayHikes = this.game.getMountain().getDayHikes();
+        
+        if (routes.length === 0 && dayHikes.length === 0) {
+            trailsContainer.innerHTML = '<p>No trails created yet. Create routes to see them here!</p>';
+            return;
+        }
+        
+        let html = '';
+        
+        // Add regular routes
+        if (routes.length > 0) {
+            html += '<h4>Trail Routes</h4>';
+            html += '<div class="trails-grid">';
+            routes.forEach(route => {
+                const difficultyIcon = this.getDifficultyIcon(route.difficulty);
+                html += `
+                    <div class="trail-item">
+                        <div class="trail-header">
+                            <div class="trail-name">${route.name || 'Unnamed Trail'}</div>
+                            <span class="trail-difficulty ${route.difficulty}">
+                                ${difficultyIcon} ${route.difficulty.charAt(0).toUpperCase() + route.difficulty.slice(1)}
+                            </span>
+                        </div>
+                        <div class="trail-connection">
+                            <strong>${route.from}</strong> → <strong>${route.to}</strong>
+                        </div>
+                        <div class="trail-stats">
+                            <div class="trail-stat">
+                                <span class="trail-stat-label">Distance:</span>
+                                <span class="trail-stat-value">${route.distance} mi</span>
+                            </div>
+                            <div class="trail-stat">
+                                <span class="trail-stat-label">Quality:</span>
+                                <span class="trail-stat-value">${route.quality}%</span>
+                            </div>
+                            <div class="trail-stat">
+                                <span class="trail-stat-label">Maintenance:</span>
+                                <span class="trail-stat-value">${route.maintenance}%</span>
+                            </div>
+                            <div class="trail-stat">
+                                <span class="trail-stat-label">Popularity:</span>
+                                <span class="trail-stat-value">${route.popularity}</span>
+                            </div>
+                        </div>
+                        ${route.features && route.features.length > 0 ? `
+                            <div class="trail-features">
+                                ${route.features.map(feature => `<span class="trail-feature">${feature}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+        
+        // Add day hikes
+        if (dayHikes.length > 0) {
+            html += '<h4>Day Hikes</h4>';
+            html += '<div class="trails-grid">';
+            dayHikes.forEach(hike => {
+                const distanceInMiles = Math.round(hike.distance * 0.019 * 3 * 10) / 10; // Convert to miles
+                const hikeIcon = hike.type === 'lake' ? '🏞️' : '⛰️';
+                const hikeType = hike.type === 'lake' ? 'Lake Hike' : 'Peak Hike';
+                const hikeColor = hike.type === 'lake' ? '#0066cc' : '#8b4513';
+                
+                html += `
+                    <div class="trail-item" style="border-left: 4px solid ${hikeColor}">
+                        <div class="trail-header">
+                            <div class="trail-name">${hike.name}</div>
+                            <span class="trail-difficulty day-hike" style="color: ${hikeColor}">
+                                ${hikeIcon} ${hikeType}
+                            </span>
+                        </div>
+                        <div class="trail-connection">
+                            <strong>${hike.from.name}</strong> → <strong>${hike.to.name}</strong>
+                        </div>
+                        <div class="trail-stats">
+                            <div class="trail-stat">
+                                <span class="trail-stat-label">Distance:</span>
+                                <span class="trail-stat-value">${distanceInMiles} mi</span>
+                            </div>
+                            <div class="trail-stat">
+                                <span class="trail-stat-label">Type:</span>
+                                <span class="trail-stat-value">${hikeType}</span>
+                            </div>
+                            <div class="trail-stat">
+                                <span class="trail-stat-label">Difficulty:</span>
+                                <span class="trail-stat-value">Easy</span>
+                            </div>
+                            <div class="trail-stat">
+                                <span class="trail-stat-label">Duration:</span>
+                                <span class="trail-stat-value">Day Trip</span>
+                            </div>
+                        </div>
+                        <div class="trail-features">
+                            <span class="trail-feature">Scenic Views</span>
+                            <span class="trail-feature">${hike.type === 'lake' ? 'Water Access' : 'Summit Views'}</span>
+                            <span class="trail-feature">No Overnight</span>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+        
+        trailsContainer.innerHTML = html;
     }
     
     updateActivitiesList() {

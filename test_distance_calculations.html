@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Distance Calculation Test</title>
+</head>
+<body>
+    <h1>Distance Calculation Test</h1>
+    <div id="results"></div>
+
+    <script>
+        // Test the new distance calculation logic
+        function calculateActualDistance(fromCampsite, toCampsite, difficulty) {
+            // Calculate Euclidean distance between campsites
+            const dx = fromCampsite.x - toCampsite.x;
+            const dy = fromCampsite.y - toCampsite.y;
+            const rawDistance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Convert to realistic miles
+            // The terrain is 200x200 units representing approximately 30 square miles
+            // This means the diagonal of the terrain is about 5.5 miles (sqrt(30))
+            // The diagonal of 200x200 units is sqrt(200^2 + 200^2) = 282.8 units
+            // So 282.8 units = 5.5 miles, therefore 1 unit = 0.019 miles
+            const milesPerUnit = 0.019;
+            const baseDistance = rawDistance * milesPerUnit;
+            
+            // Add some terrain complexity factor based on difficulty
+            let terrainMultiplier = 1.0;
+            switch (difficulty) {
+                case 'easy': terrainMultiplier = 1.2; break;
+                case 'moderate': terrainMultiplier = 1.4; break;
+                case 'difficult': terrainMultiplier = 1.8; break;
+                case 'expert': terrainMultiplier = 2.2; break;
+            }
+            
+            const finalDistance = Math.round(baseDistance * terrainMultiplier * 10) / 10;
+            
+            // Ensure minimum distance of 0.5 miles and maximum of 12 miles
+            return Math.max(0.5, Math.min(12, finalDistance));
+        }
+
+        // Test cases
+        const testCases = [
+            {
+                name: "Very close campsites (15 units apart)",
+                from: { x: 50, y: 50 },
+                to: { x: 65, y: 50 },
+                expected: "~0.3-0.7 miles"
+            },
+            {
+                name: "Medium distance campsites (50 units apart)",
+                from: { x: 50, y: 50 },
+                to: { x: 100, y: 50 },
+                expected: "~1.0-2.2 miles"
+            },
+            {
+                name: "Far campsites (100 units apart)",
+                from: { x: 50, y: 50 },
+                to: { x: 150, y: 50 },
+                expected: "~2.0-4.4 miles"
+            },
+            {
+                name: "Diagonal distance (70 units)",
+                from: { x: 50, y: 50 },
+                to: { x: 120, y: 120 },
+                expected: "~1.4-3.1 miles"
+            }
+        ];
+
+        const results = document.getElementById('results');
+        let html = '<h2>Test Results:</h2>';
+
+        testCases.forEach(test => {
+            const easyDistance = calculateActualDistance(test.from, test.to, 'easy');
+            const moderateDistance = calculateActualDistance(test.from, test.to, 'moderate');
+            const difficultDistance = calculateActualDistance(test.from, test.to, 'difficult');
+            const expertDistance = calculateActualDistance(test.from, test.to, 'expert');
+
+            const rawDistance = Math.sqrt(
+                Math.pow(test.to.x - test.from.x, 2) + 
+                Math.pow(test.to.y - test.from.y, 2)
+            );
+
+            html += `
+                <div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
+                    <h3>${test.name}</h3>
+                    <p><strong>Raw distance:</strong> ${rawDistance.toFixed(1)} units</p>
+                    <p><strong>Expected range:</strong> ${test.expected}</p>
+                    <p><strong>Easy:</strong> ${easyDistance} miles</p>
+                    <p><strong>Moderate:</strong> ${moderateDistance} miles</p>
+                    <p><strong>Difficult:</strong> ${difficultDistance} miles</p>
+                    <p><strong>Expert:</strong> ${expertDistance} miles</p>
+                </div>
+            `;
+        });
+
+        results.innerHTML = html;
+    </script>
+</body>
+</html> 

@@ -10,7 +10,7 @@ class RouteManager {
         this.campsiteManager = campsiteManager;
     }
     
-    createRoute(from, to, difficulty, distance = null) {
+    createRoute(from, to, difficulty, distance = null, mountain = null) {
         console.log(`Creating route: ${from} -> ${to} (${difficulty})`);
         
         // Check if route already exists between these campsites
@@ -21,7 +21,7 @@ class RouteManager {
         
         // Calculate actual distance if not provided
         if (distance === null) {
-            distance = this.calculateActualDistance(from, to, difficulty);
+            distance = this.calculateActualDistance(from, to, difficulty, mountain);
         }
         
         const route = {
@@ -43,14 +43,16 @@ class RouteManager {
         return route;
     }
     
-    calculateActualDistance(from, to, difficulty) {
+    calculateActualDistance(from, to, difficulty, mountain = null) {
         // Get campsite positions from the mountain
-        if (!window.game || !window.game.getMountain) {
-            console.warn('Game not available for distance calculation, using default');
-            return 5; // Default fallback
+        if (!mountain) {
+            if (!window.game || !window.game.getMountain) {
+                console.warn('Game not available for distance calculation, using default');
+                return 5; // Default fallback
+            }
+            mountain = window.game.getMountain();
         }
         
-        const mountain = window.game.getMountain();
         const campsites = mountain.getCampsites();
         
         const fromCampsite = campsites.find(c => c.name === from);
@@ -66,24 +68,28 @@ class RouteManager {
         const dy = fromCampsite.y - toCampsite.y;
         const rawDistance = Math.sqrt(dx * dx + dy * dy);
         
-        // Convert to realistic miles (assuming 100 units = ~20 miles)
-        // This gives us a reasonable scale where nearby campsites are 2-8 miles apart
-        const milesPerUnit = 0.2;
+        // Convert to realistic miles
+        // The terrain is 200x200 units representing approximately 30 square miles
+        // This means the diagonal of the terrain is about 5.5 miles (sqrt(30))
+        // The diagonal of 200x200 units is sqrt(200^2 + 200^2) = 282.8 units
+        // So 282.8 units = 5.5 miles, therefore 1 unit = 0.019 miles
+        // Apply 3x multiplier for more substantial trail distances
+        const milesPerUnit = 0.019 * 3;
         const baseDistance = rawDistance * milesPerUnit;
         
         // Add some terrain complexity factor based on difficulty
         let terrainMultiplier = 1.0;
         switch (difficulty) {
-            case 'easy': terrainMultiplier = 1.1; break; // Easy routes are slightly longer due to gentle paths
-            case 'moderate': terrainMultiplier = 1.3; break; // Moderate routes wind more
-            case 'difficult': terrainMultiplier = 1.6; break; // Difficult routes take complex paths
-            case 'expert': terrainMultiplier = 2.0; break; // Expert routes are very winding
+            case 'easy': terrainMultiplier = 1.2; break; // Easy routes are slightly longer due to gentle paths
+            case 'moderate': terrainMultiplier = 1.4; break; // Moderate routes wind more
+            case 'difficult': terrainMultiplier = 1.8; break; // Difficult routes take complex paths
+            case 'expert': terrainMultiplier = 2.2; break; // Expert routes are very winding
         }
         
         const finalDistance = Math.round(baseDistance * terrainMultiplier * 10) / 10; // Round to 1 decimal place
         
-        // Ensure minimum distance of 1 mile and maximum of 15 miles
-        return Math.max(1, Math.min(15, finalDistance));
+        // Ensure minimum distance of 1.5 miles and maximum of 36 miles
+        return Math.max(1.5, Math.min(36, finalDistance));
     }
     
     generateRouteName(from, to, difficulty, distance) {

@@ -47,6 +47,15 @@ Welcome to **High Adventure**, a strategic simulation game where you manage a ba
 - **Facility Variety**: Each campsite has different facilities based on location
 - **Capacity Management**: Campsites have varying visitor capacities
 
+#### Day Hikes System
+- **Automatic Generation**: Day hikes are automatically created from each campsite to the nearest lake or mountain peak
+- **Distance Limit**: Only hikes of 10 miles or less are included (realistic for day trips)
+- **Visual Representation**: Day hikes appear as dotted lines on the mountain map
+- **Color Coding**: Blue dotted lines for lake hikes, brown dotted lines for peak hikes
+- **Distance Display**: Each day hike shows the route name and distance in miles
+- **Peak Markers**: Mountain peaks are marked with brown triangles and show elevation
+- **Smart Routing**: System prefers lakes over peaks when distances are similar
+
 ### 🛤️ Trail Route System
 
 #### Route Creation
@@ -281,3 +290,26 @@ Final Score = Sum of all scores
 High Adventure combines strategic management with the beauty of outdoor recreation. Whether you prefer to focus on challenging expert trails, family-friendly activities, or luxury amenities, there's a path to success for every play style.
 
 **Start your mountain management journey today!** ⛺🏔️ 
+
+### 🏔️ Mountain Generation System
+
+#### Procedural Terrain
+- **Unique Mountains**: Every game generates a different mountain layout
+- **Terrain Types**: Snow peaks, rocky cliffs, forests, meadows, and valleys
+- **Elevation System**: Campsites are placed at different elevations affecting facilities
+- **Interactive Exploration**: Click and drag to pan, use zoom controls to explore
+
+#### Day Hikes System
+- **Automatic Generation**: Day hikes are automatically created from each campsite to the nearest lake or mountain peak
+- **Distance Limit**: Only hikes of 10 miles or less are included (realistic for day trips)
+- **Visual Representation**: Day hikes appear as dotted lines on the mountain map
+- **Color Coding**: Blue dotted lines for lake hikes, brown dotted lines for peak hikes
+- **Distance Display**: Each day hike shows the route name and distance in miles
+- **Peak Markers**: Mountain peaks are marked with brown triangles and show elevation
+- **Smart Routing**: System prefers lakes over peaks when distances are similar
+
+#### Campsite System
+- **Strategic Placement**: Campsites are positioned based on terrain features
+- **Elevation Effects**: Higher campsites get emergency shelters, lower ones get more amenities
+- **Facility Variety**: Each campsite has different facilities based on location
+- **Capacity Management**: Campsites have varying visitor capacities

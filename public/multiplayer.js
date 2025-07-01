@@ -641,6 +641,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.game) {
             multiplayerClient.setGame(window.game);
             multiplayerUI = new MultiplayerUI(multiplayerClient);
+            console.log('Multiplayer initialized successfully');
+        } else {
+            console.warn('Game not available for multiplayer initialization');
         }
-    }, 1000);
+    }, 2000); // Increased timeout to ensure game is fully loaded
 }); 
