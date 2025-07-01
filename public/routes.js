@@ -11,6 +11,8 @@ class RouteManager {
     }
     
     createRoute(from, to, difficulty, distance = null) {
+        console.log(`Creating route: ${from} -> ${to} (${difficulty})`);
+        
         // Check if route already exists between these campsites
         if (this.routeExists(from, to)) {
             console.log(`Route already exists between ${from} and ${to}`);
@@ -37,6 +39,7 @@ class RouteManager {
         };
         
         this.routes.push(route);
+        console.log(`Route created successfully: ${route.name} (${route.distance}mi) - Total routes: ${this.routes.length}`);
         return route;
     }
     

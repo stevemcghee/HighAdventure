@@ -23,19 +23,33 @@ body {
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    gap: 15px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: center;
+    width: 100%;
 }
 
 .game-header h1 {
     color: #2c5530;
     font-size: 2.5em;
-    margin-bottom: 15px;
+    margin: 0;
     text-align: center;
+    flex: 1;
 }
 
 .game-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 15px;
+    width: 100%;
+    max-width: 800px;
 }
 
 .stat {
@@ -66,12 +80,22 @@ body {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
+.mountain-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
 #mountainCanvas {
     width: 100%;
-    height: 400px;
+    max-width: 600px;
+    height: auto;
+    aspect-ratio: 3/2;
     border-radius: 10px;
     border: 2px solid #e5e7eb;
     background: linear-gradient(to bottom, #87ceeb, #98fb98);
+    display: block;
 }
 
 .view-controls {
@@ -102,11 +126,145 @@ body {
     padding: 15px;
     margin-top: 20px;
     border: 1px solid #e2e8f0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .campsite-info h3 {
     color: #1e293b;
     margin-bottom: 10px;
+}
+
+.campsite-header {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #0ea5e9;
+}
+
+.campsite-header h4 {
+    color: #1e293b;
+    margin: 0 0 15px 0;
+    font-size: 1.4em;
+    text-align: center;
+}
+
+.campsite-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    font-size: 1.5em;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+.stat-label {
+    font-size: 0.8em;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.facilities-section {
+    margin-bottom: 20px;
+}
+
+.facilities-section h5 {
+    color: #1e293b;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.facilities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    width: 100%;
+}
+
+.facility-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    min-height: 60px;
+}
+
+.facility-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    border-color: #3b82f6;
+}
+
+.facility-icon {
+    font-size: 1.5em;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border-radius: 8px;
+    border: 1px solid #0ea5e9;
+}
+
+.facility-content {
+    flex: 1;
+}
+
+.facility-content h4 {
+    color: #1e293b;
+    margin: 0 0 4px 0;
+    font-size: 0.9em;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.facility-content p {
+    color: #64748b;
+    margin: 0;
+    font-size: 0.75em;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .tabs {
@@ -201,9 +359,9 @@ body {
 .large-button {
     font-size: 1.2em;
     padding: 15px 30px;
-    margin: 10px 0;
-    width: 100%;
+    margin: 0;
     background: linear-gradient(135deg, #10b981, #059669);
+    min-width: 200px;
 }
 
 .large-button:hover {
@@ -220,6 +378,51 @@ body {
 .large-button.disabled:hover {
     background: linear-gradient(135deg, #9ca3af, #6b7280);
     transform: none;
+}
+
+.large-button.hidden {
+    display: none;
+}
+
+.fade-out {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: all 0.3s ease-out;
+    pointer-events: none;
+}
+
+.activity-card.fade-out,
+.upgrade-item.fade-out {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+    transition: all 0.4s ease-out;
+    pointer-events: none;
+}
+
+.purchase-success {
+    position: relative;
+}
+
+.purchase-success::after {
+    content: '✓ Purchased!';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #10b981;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9em;
+    z-index: 10;
+    animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
 }
 
 .game-control {
@@ -575,8 +778,25 @@ body {
 }
 
 @media (max-width: 768px) {
+    .game-header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .header-top {
+        order: 1;
+    }
+
+    .game-header h1 {
+        order: 2;
+        font-size: 2em;
+    }
+
     .game-stats {
+        order: 3;
         grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
     
     .tabs {
@@ -589,6 +809,59 @@ body {
     
     .activities-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .campsite-stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .facilities-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+    }
+    
+    .facility-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 8px;
+        min-height: 80px;
+    }
+    
+    .facility-icon {
+        align-self: center;
+        width: 35px;
+        height: 35px;
+        font-size: 1.2em;
+    }
+    
+    .facility-content h4 {
+        font-size: 0.8em;
+        margin-bottom: 2px;
+    }
+    
+    .facility-content p {
+        font-size: 0.7em;
+        -webkit-line-clamp: 3;
+    }
+    
+    #mountainCanvas {
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .mountain-view {
+        gap: 8px;
+    }
+    
+    .view-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .view-controls button {
+        padding: 6px 10px;
+        font-size: 12px;
     }
 }
 

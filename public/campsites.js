@@ -42,6 +42,7 @@ class CampsiteManager {
             capacity: 20 + Math.floor(Math.random() * 30),
             facilities: this.generateFacilities(height),
             activities: [],
+            upgrades: [],
             rating: 3 + Math.random() * 2,
             popularity: 0
         };

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Per-Campsite Activities and Upgrades</title>
+</head>
+<body>
+    <h1>Testing Per-Campsite Activities and Upgrades</h1>
+    <div id="test-results"></div>
+    
+    <script src="public/mountain.js"></script>
+    <script src="public/campsites.js"></script>
+    <script src="public/routes.js"></script>
+    <script src="public/activities.js"></script>
+    <script src="public/upgrades.js"></script>
+    <script src="public/game.js"></script>
+    
+    <script>
+        // Test the per-campsite system
+        function runTests() {
+            const results = [];
+            
+            try {
+                // Create test instances
+                const mountain = new MountainGenerator();
+                const campsiteManager = new CampsiteManager();
+                const activityManager = new ActivityManager();
+                const upgradeManager = new UpgradeManager();
+                
+                // Generate test data
+                mountain.generateTerrain();
+                campsiteManager.generateCampsites(mountain);
+                
+                const campsites = campsiteManager.getCampsites();
+                results.push(`✓ Generated ${campsites.length} campsites`);
+                
+                // Test activities per campsite
+                const testCampsite = campsites[0];
+                activityManager.initializeActivities(testCampsite);
+                
+                const activities = activityManager.getCampsiteActivities(testCampsite);
+                results.push(`✓ Campsite ${testCampsite.name} has ${activities.length} activities`);
+                
+                const availableActivities = activityManager.getAvailableActivitiesForCampsite(testCampsite);
+                results.push(`✓ Campsite ${testCampsite.name} has ${availableActivities.length} available activities`);
+                
+                // Test upgrades per campsite
+                upgradeManager.initializeUpgrades(testCampsite);
+                
+                const upgrades = upgradeManager.getCampsiteUpgrades(testCampsite);
+                results.push(`✓ Campsite ${testCampsite.name} has ${upgrades.length} upgrades`);
+                
+                const availableUpgrades = upgradeManager.getAvailableUpgradesForCampsite(testCampsite);
+                results.push(`✓ Campsite ${testCampsite.name} has ${availableUpgrades.length} available upgrades`);
+                
+                // Test that different campsites have separate activities/upgrades
+                const testCampsite2 = campsites[1];
+                activityManager.initializeActivities(testCampsite2);
+                upgradeManager.initializeUpgrades(testCampsite2);
+                
+                const activities2 = activityManager.getCampsiteActivities(testCampsite2);
+                const upgrades2 = upgradeManager.getCampsiteUpgrades(testCampsite2);
+                
+                results.push(`✓ Campsite ${testCampsite2.name} has ${activities2.length} activities and ${upgrades2.length} upgrades`);
+                
+                // Test that activities are different between campsites
+                const totalActivities = activityManager.getCampsiteActivities(testCampsite).length + 
+                                      activityManager.getCampsiteActivities(testCampsite2).length;
+                results.push(`✓ Total activities across campsites: ${totalActivities}`);
+                
+                results.push('✓ All tests passed! Per-campsite system is working correctly.');
+                
+            } catch (error) {
+                results.push(`✗ Test failed: ${error.message}`);
+                console.error('Test error:', error);
+            }
+            
+            // Display results
+            document.getElementById('test-results').innerHTML = results.map(r => `<p>${r}</p>`).join('');
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html> 

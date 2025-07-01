@@ -259,9 +259,19 @@ class GameUI {
         if (route) {
             this.addMessage(`Created ${route.name} (${route.distance}mi) for $${route.cost}`);
             this.updateRoutesList();
-            // Re-render the mountain to show the new route
-            if (this.game.getMountain()) {
-                this.game.getMountain().render();
+            
+            // Ensure mountain re-renders to show the new route
+            const mountain = this.game.getMountain();
+            if (mountain) {
+                console.log('Re-rendering mountain after route creation');
+                mountain.render();
+                
+                // Force a second render after a short delay to ensure it's visible
+                setTimeout(() => {
+                    mountain.render();
+                }, 100);
+            } else {
+                console.warn('Mountain object not found for re-rendering');
             }
         } else {
             this.addMessage("Failed to create route!");
@@ -278,6 +288,12 @@ class GameUI {
         this.updateStaffCount(this.game.getGameState().staff);
         this.updateStartButton();
         this.updateControlButtons(this.game.getGameState());
+        this.updateRoutesList();
+        this.updateActivitiesList();
+        this.updateUpgradesList();
+        if (this.selectedCampsite) {
+            this.updateCampsiteDetails();
+        }
     }
     
     updateGameStats(gameState = null) {
@@ -482,15 +498,36 @@ class GameUI {
     
     updateActivitiesList() {
         const container = document.getElementById('activities-container');
-        const activities = this.game.getActivityManager().getActivities();
-        const available = this.game.getActivityManager().getAvailableActivities();
+        const campsites = this.game.getCampsiteManager().getCampsites();
         
-        let html = '<h4>Installed Activities</h4>';
-        if (activities.length === 0) {
+        // Collect all activities across campsites
+        const allActivities = new Map(); // activityId -> {activity, campsites: []}
+        const allAvailableActivities = new Map(); // activityId -> activity
+        
+        campsites.forEach(campsite => {
+            const activities = this.game.getActivityManager().getCampsiteActivities(campsite);
+            const available = this.game.getActivityManager().getAvailableActivitiesForCampsite(campsite);
+            
+            activities.forEach(activity => {
+                if (!allActivities.has(activity.id)) {
+                    allActivities.set(activity.id, { activity, campsites: [] });
+                }
+                allActivities.get(activity.id).campsites.push(campsite.name);
+            });
+            
+            available.forEach(activity => {
+                if (!allAvailableActivities.has(activity.id)) {
+                    allAvailableActivities.set(activity.id, activity);
+                }
+            });
+        });
+        
+        let html = '<h4>Installed Activities (All Campsites)</h4>';
+        if (allActivities.size === 0) {
             html += '<p>No activities installed yet.</p>';
         } else {
             html += '<div class="activities-grid">';
-            activities.forEach(activity => {
+            allActivities.forEach(({ activity, campsites }) => {
                 html += `
                     <div class="activity-card">
                         <div class="activity-icon">${activity.icon}</div>
@@ -498,6 +535,7 @@ class GameUI {
                         <p>${activity.description}</p>
                         <p><strong>Happiness:</strong> +${activity.happinessBonus}</p>
                         <p><strong>Satisfaction:</strong> ${Math.round(activity.satisfaction)}%</p>
+                        <p><strong>Installed at:</strong> ${campsites.join(', ')}</p>
                     </div>
                 `;
             });
@@ -505,11 +543,11 @@ class GameUI {
         }
         
         html += '<h4>Available Activities</h4>';
-        if (available.length === 0) {
-            html += '<p>All activities have been purchased!</p>';
+        if (allAvailableActivities.size === 0) {
+            html += '<p>All activities have been purchased across all campsites!</p>';
         } else {
             html += '<div class="activities-grid">';
-            available.forEach(activity => {
+            allAvailableActivities.forEach(activity => {
                 html += `
                     <div class="activity-card">
                         <div class="activity-icon">${activity.icon}</div>
@@ -517,8 +555,7 @@ class GameUI {
                         <p>${activity.description}</p>
                         <p><strong>Cost:</strong> $${activity.cost}</p>
                         <p><strong>Happiness:</strong> +${activity.happinessBonus}</p>
-                        <button onclick="window.game.getActivityManager().purchaseActivity('${activity.id}')" 
-                                class="primary-button">Purchase</button>
+                        <p><em>Click on a campsite to purchase this activity</em></p>
                     </div>
                 `;
             });
@@ -530,15 +567,36 @@ class GameUI {
     
     updateUpgradesList() {
         const container = document.getElementById('upgrades-container');
-        const upgrades = this.game.getUpgradeManager().getUpgrades();
-        const available = this.game.getUpgradeManager().getAvailableUpgrades();
+        const campsites = this.game.getCampsiteManager().getCampsites();
         
-        let html = '<h4>Installed Upgrades</h4>';
-        if (upgrades.length === 0) {
+        // Collect all upgrades across campsites
+        const allUpgrades = new Map(); // upgradeId -> {upgrade, campsites: []}
+        const allAvailableUpgrades = new Map(); // upgradeId -> upgrade
+        
+        campsites.forEach(campsite => {
+            const upgrades = this.game.getUpgradeManager().getCampsiteUpgrades(campsite);
+            const available = this.game.getUpgradeManager().getAvailableUpgradesForCampsite(campsite);
+            
+            upgrades.forEach(upgrade => {
+                if (!allUpgrades.has(upgrade.id)) {
+                    allUpgrades.set(upgrade.id, { upgrade, campsites: [] });
+                }
+                allUpgrades.get(upgrade.id).campsites.push(campsite.name);
+            });
+            
+            available.forEach(upgrade => {
+                if (!allAvailableUpgrades.has(upgrade.id)) {
+                    allAvailableUpgrades.set(upgrade.id, upgrade);
+                }
+            });
+        });
+        
+        let html = '<h4>Installed Upgrades (All Campsites)</h4>';
+        if (allUpgrades.size === 0) {
             html += '<p>No upgrades installed yet.</p>';
         } else {
             html += '<div class="upgrades-grid">';
-            upgrades.forEach(upgrade => {
+            allUpgrades.forEach(({ upgrade, campsites }) => {
                 html += `
                     <div class="upgrade-item">
                         <div>
@@ -546,9 +604,9 @@ class GameUI {
                             <p>${upgrade.description}</p>
                             <p><strong>Level:</strong> ${upgrade.level}</p>
                             <p><strong>Effectiveness:</strong> ${Math.round(upgrade.effectiveness)}%</p>
+                            <p><strong>Installed at:</strong> ${campsites.join(', ')}</p>
                         </div>
-                        <button onclick="window.game.getUpgradeManager().upgradeExisting('${upgrade.id}')" 
-                                class="secondary-button">Upgrade</button>
+                        <p><em>Click on a campsite to upgrade this item</em></p>
                     </div>
                 `;
             });
@@ -556,11 +614,11 @@ class GameUI {
         }
         
         html += '<h4>Available Upgrades</h4>';
-        if (available.length === 0) {
-            html += '<p>All upgrades have been purchased!</p>';
+        if (allAvailableUpgrades.size === 0) {
+            html += '<p>All upgrades have been purchased across all campsites!</p>';
         } else {
             html += '<div class="upgrades-grid">';
-            available.forEach(upgrade => {
+            allAvailableUpgrades.forEach(upgrade => {
                 html += `
                     <div class="upgrade-item">
                         <div>
@@ -569,8 +627,7 @@ class GameUI {
                             <p><strong>Cost:</strong> $${upgrade.cost}</p>
                             <p><strong>Happiness:</strong> +${upgrade.happinessBonus}</p>
                         </div>
-                        <button onclick="window.game.getUpgradeManager().purchaseUpgrade('${upgrade.id}')" 
-                                class="primary-button">Purchase</button>
+                        <p><em>Click on a campsite to purchase this upgrade</em></p>
                     </div>
                 `;
             });
@@ -589,22 +646,232 @@ class GameUI {
         }
         
         const campsite = this.selectedCampsite;
+        const activities = this.game.getActivityManager().getCampsiteActivities(campsite);
+        const availableActivities = this.game.getActivityManager().getAvailableActivitiesForCampsite(campsite);
+        const upgrades = this.game.getUpgradeManager().getCampsiteUpgrades(campsite);
+        const availableUpgrades = this.game.getUpgradeManager().getAvailableUpgradesForCampsite(campsite);
+        
         let html = `
-            <h4>${campsite.name}</h4>
-            <p><strong>Elevation:</strong> ${campsite.elevation} ft</p>
-            <p><strong>Capacity:</strong> ${campsite.capacity} people</p>
-            <p><strong>Rating:</strong> ${campsite.rating.toFixed(1)} ⭐</p>
-            <p><strong>Popularity:</strong> ${campsite.popularity} visitors</p>
-            <h5>Facilities:</h5>
-            <ul>
+            <div class="campsite-header">
+                <h4>${campsite.name}</h4>
+                <div class="campsite-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">🏔️</span>
+                        <span class="stat-value">${campsite.elevation} ft</span>
+                        <span class="stat-label">Elevation</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">👥</span>
+                        <span class="stat-value">${campsite.capacity}</span>
+                        <span class="stat-label">Capacity</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <span class="stat-value">${campsite.rating.toFixed(1)}</span>
+                        <span class="stat-label">Rating</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">👤</span>
+                        <span class="stat-value">${campsite.popularity}</span>
+                        <span class="stat-label">Visitors</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="facilities-section">
+                <h5>🏕️ Facilities</h5>
+                <div class="facilities-grid">
         `;
         
         campsite.facilities.forEach(facility => {
-            html += `<li>${this.getFacilityName(facility)}</li>`;
+            const facilityName = this.getFacilityName(facility);
+            const facilityIcon = this.getFacilityIcon(facility);
+            const facilityDescription = this.getFacilityDescription(facility);
+            
+            html += `
+                <div class="facility-card">
+                    <div class="facility-icon">${facilityIcon}</div>
+                    <div class="facility-content">
+                        <h4>${facilityName}</h4>
+                        <p>${facilityDescription}</p>
+                    </div>
+                </div>
+            `;
         });
         
-        html += '</ul>';
+        html += '</div></div>';
+        
+        // Add activities section
+        html += '<h5>Activities:</h5>';
+        if (activities.length === 0) {
+            html += '<p>No activities installed yet.</p>';
+        } else {
+            html += '<div class="activities-grid">';
+            activities.forEach(activity => {
+                html += `
+                    <div class="activity-card">
+                        <div class="activity-icon">${activity.icon}</div>
+                        <h4>${activity.name}</h4>
+                        <p>${activity.description}</p>
+                        <p><strong>Happiness:</strong> +${activity.happinessBonus}</p>
+                        <p><strong>Satisfaction:</strong> ${Math.round(activity.satisfaction)}%</p>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+        
+        // Add available activities
+        if (availableActivities.length > 0) {
+            html += '<h5>Available Activities:</h5>';
+            html += '<div class="activities-grid">';
+            availableActivities.forEach(activity => {
+                html += `
+                    <div class="activity-card" data-activity-id="${activity.id}" data-campsite-name="${campsite.name}">
+                        <div class="activity-icon">${activity.icon}</div>
+                        <h4>${activity.name}</h4>
+                        <p>${activity.description}</p>
+                        <p><strong>Cost:</strong> $${activity.cost}</p>
+                        <p><strong>Happiness:</strong> +${activity.happinessBonus}</p>
+                        <button class="primary-button purchase-activity-btn">Purchase</button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+        
+        // Add upgrades section
+        html += '<h5>Upgrades:</h5>';
+        if (upgrades.length === 0) {
+            html += '<p>No upgrades installed yet.</p>';
+        } else {
+            html += '<div class="upgrades-grid">';
+            upgrades.forEach(upgrade => {
+                html += `
+                    <div class="upgrade-item" data-upgrade-id="${upgrade.id}" data-campsite-name="${campsite.name}">
+                        <div>
+                            <h4>${upgrade.name}</h4>
+                            <p>${upgrade.description}</p>
+                            <p><strong>Level:</strong> ${upgrade.level}</p>
+                            <p><strong>Effectiveness:</strong> ${Math.round(upgrade.effectiveness)}%</p>
+                        </div>
+                        <button class="secondary-button upgrade-existing-btn">Upgrade</button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+        
+        // Add available upgrades
+        if (availableUpgrades.length > 0) {
+            html += '<h5>Available Upgrades:</h5>';
+            html += '<div class="upgrades-grid">';
+            availableUpgrades.forEach(upgrade => {
+                html += `
+                    <div class="upgrade-item" data-upgrade-id="${upgrade.id}" data-campsite-name="${campsite.name}">
+                        <div>
+                            <h4>${upgrade.name}</h4>
+                            <p>${upgrade.description}</p>
+                            <p><strong>Cost:</strong> $${upgrade.cost}</p>
+                            <p><strong>Happiness:</strong> +${upgrade.happinessBonus}</p>
+                        </div>
+                        <button class="primary-button purchase-upgrade-btn">Purchase</button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+        
         details.innerHTML = html;
+        
+        // Add event listeners for purchase buttons
+        this.setupPurchaseEventListeners();
+    }
+    
+    setupPurchaseEventListeners() {
+        // Activity purchase buttons
+        const activityButtons = document.querySelectorAll('.purchase-activity-btn');
+        activityButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const activityCard = e.target.closest('.activity-card');
+                const activityId = activityCard.dataset.activityId;
+                const campsiteName = activityCard.dataset.campsiteName;
+                const campsite = this.game.getCampsiteManager().getCampsiteByName(campsiteName);
+                
+                if (campsite) {
+                    // Add success feedback
+                    activityCard.classList.add('purchase-success');
+                    
+                    // Fade out the card after showing success
+                    setTimeout(() => {
+                        activityCard.classList.add('fade-out');
+                    }, 200);
+                    
+                    // Purchase the activity after a short delay
+                    setTimeout(() => {
+                        this.game.getActivityManager().purchaseActivityForCampsite(campsite, activityId);
+                        // Update the campsite details to reflect the purchase
+                        this.updateCampsiteDetails();
+                    }, 600);
+                }
+            });
+        });
+        
+        // Upgrade purchase buttons
+        const upgradeButtons = document.querySelectorAll('.purchase-upgrade-btn');
+        upgradeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const upgradeItem = e.target.closest('.upgrade-item');
+                const upgradeId = upgradeItem.dataset.upgradeId;
+                const campsiteName = upgradeItem.dataset.campsiteName;
+                const campsite = this.game.getCampsiteManager().getCampsiteByName(campsiteName);
+                
+                if (campsite) {
+                    // Add success feedback
+                    upgradeItem.classList.add('purchase-success');
+                    
+                    // Fade out the item after showing success
+                    setTimeout(() => {
+                        upgradeItem.classList.add('fade-out');
+                    }, 200);
+                    
+                    // Purchase the upgrade after a short delay
+                    setTimeout(() => {
+                        this.game.getUpgradeManager().purchaseUpgradeForCampsite(campsite, upgradeId);
+                        // Update the campsite details to reflect the purchase
+                        this.updateCampsiteDetails();
+                    }, 600);
+                }
+            });
+        });
+        
+        // Upgrade existing buttons
+        const upgradeExistingButtons = document.querySelectorAll('.upgrade-existing-btn');
+        upgradeExistingButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const upgradeItem = e.target.closest('.upgrade-item');
+                const upgradeId = upgradeItem.dataset.upgradeId;
+                const campsiteName = upgradeItem.dataset.campsiteName;
+                const campsite = this.game.getCampsiteManager().getCampsiteByName(campsiteName);
+                
+                if (campsite) {
+                    // Add success feedback
+                    upgradeItem.classList.add('purchase-success');
+                    
+                    // Fade out the item briefly, then update it
+                    setTimeout(() => {
+                        upgradeItem.classList.add('fade-out');
+                    }, 200);
+                    
+                    // Upgrade the existing upgrade after a short delay
+                    setTimeout(() => {
+                        this.game.getUpgradeManager().upgradeExistingForCampsite(campsite, upgradeId);
+                        // Update the campsite details to reflect the upgrade
+                        this.updateCampsiteDetails();
+                    }, 600);
+                }
+            });
+        });
     }
     
     getFacilityName(facility) {
@@ -620,6 +887,36 @@ class GameUI {
             'emergency_shelter': 'Emergency Shelter'
         };
         return names[facility] || facility;
+    }
+    
+    getFacilityIcon(facility) {
+        const icons = {
+            'tent_sites': '⛺',
+            'water_source': '💧',
+            'fire_rings': '🔥',
+            'picnic_tables': '🪑',
+            'bear_lockers': '🔒',
+            'outhouse': '🚻',
+            'shower_house': '🚿',
+            'camp_store': '🏪',
+            'emergency_shelter': '🏠'
+        };
+        return icons[facility] || '🏕️';
+    }
+    
+    getFacilityDescription(facility) {
+        const descriptions = {
+            'tent_sites': 'Designated areas for tent camping with level ground',
+            'water_source': 'Clean drinking water available for campers',
+            'fire_rings': 'Safe fire pits for cooking and warmth',
+            'picnic_tables': 'Covered picnic areas for outdoor dining',
+            'bear_lockers': 'Secure food storage to prevent wildlife encounters',
+            'outhouse': 'Basic restroom facilities for campers',
+            'shower_house': 'Hot showers and modern bathroom facilities',
+            'camp_store': 'Convenience store with camping supplies and snacks',
+            'emergency_shelter': 'Weather protection and emergency refuge'
+        };
+        return descriptions[facility] || 'Camping facility';
     }
     
     getDifficultyColor(difficulty) {
@@ -662,12 +959,11 @@ class GameUI {
         const gameStatus = document.getElementById('game-status');
         
         if (this.game && this.game.getGameState().gameStarted) {
-            startGameBtn.textContent = '✅ Game Started';
-            startGameBtn.disabled = true;
-            startGameBtn.classList.add('disabled');
+            startGameBtn.classList.add('hidden');
             gameStatus.textContent = 'Game is running - auto-progression active';
             gameStatus.style.color = '#10b981';
         } else {
+            startGameBtn.classList.remove('hidden');
             startGameBtn.textContent = '🚀 Start Game';
             startGameBtn.disabled = false;
             startGameBtn.classList.remove('disabled');

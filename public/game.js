@@ -39,7 +39,19 @@ class HighAdventureGame {
         
         // Ensure mountain is rendered with initial routes
         if (this.mountain) {
+            console.log('Rendering mountain with initial routes...');
             this.mountain.render();
+            
+            // Force multiple renders to ensure routes are visible
+            setTimeout(() => {
+                console.log('Re-rendering mountain to ensure initial routes are visible');
+                this.mountain.render();
+            }, 100);
+            
+            setTimeout(() => {
+                console.log('Final render to ensure initial routes are visible');
+                this.mountain.render();
+            }, 500);
         }
         
         // Debug: Check if routeManager has the method
@@ -52,9 +64,11 @@ class HighAdventureGame {
         this.activityManager.setGameState(this.gameState);
         this.upgradeManager.setGameState(this.gameState);
         
-        // Initialize some basic activities and upgrades
-        this.activityManager.initializeActivities();
-        this.upgradeManager.initializeUpgrades();
+        // Initialize some basic activities and upgrades for each campsite
+        this.campsiteManager.getCampsites().forEach(campsite => {
+            this.activityManager.initializeActivities(campsite);
+            this.upgradeManager.initializeUpgrades(campsite);
+        });
         
         this.ui.initialize(this);
         
@@ -70,6 +84,7 @@ class HighAdventureGame {
     
     createInitialRoutes() {
         const campsites = this.campsiteManager.getCampsites();
+        console.log(`Creating initial routes with ${campsites.length} campsites:`, campsites.map(c => c.name));
         
         if (campsites.length < 3) {
             console.log('Not enough campsites to create initial routes');
@@ -77,18 +92,21 @@ class HighAdventureGame {
         }
         
         // Create 3 connected routes in a triangle pattern with calculated distances
+        console.log('Creating initial route 1...');
         const route1 = this.routeManager.createRoute(
             campsites[0].name, 
             campsites[1].name, 
             'moderate'
         );
         
+        console.log('Creating initial route 2...');
         const route2 = this.routeManager.createRoute(
             campsites[1].name, 
             campsites[2].name, 
             'easy'
         );
         
+        console.log('Creating initial route 3...');
         const route3 = this.routeManager.createRoute(
             campsites[2].name, 
             campsites[0].name, 
@@ -96,10 +114,12 @@ class HighAdventureGame {
         );
         
         if (route1 && route2 && route3) {
-            console.log('Created initial routes:', route1, route2, route3);
+            console.log('Successfully created all initial routes:', route1, route2, route3);
+            console.log(`Total routes in manager: ${this.routeManager.getRoutes().length}`);
             this.addMessage(`Created initial trail network: ${route1.name} (${route1.distance}mi), ${route2.name} (${route2.distance}mi), and ${route3.name} (${route3.distance}mi)`);
         } else {
             console.log('Failed to create some initial routes');
+            console.log('Route creation results:', { route1, route2, route3 });
         }
     }
     
@@ -205,32 +225,39 @@ class HighAdventureGame {
             }
         }
         
-        // Activity opportunities
-        const availableActivities = this.activityManager.getAvailableActivities();
-        if (availableActivities.length > 0) {
-            const activity = availableActivities[Math.floor(Math.random() * availableActivities.length)];
-            this.gameState.planningChoices.push({
-                type: 'activity',
-                title: 'New Activity',
-                description: `Install ${activity.name}`,
-                cost: activity.cost,
-                effect: `+${activity.happinessBonus} happiness`,
-                action: () => this.activityManager.purchaseActivity(activity.id)
-            });
+        // Activity opportunities - select a random campsite
+        const campsites = this.campsiteManager.getCampsites();
+        if (campsites.length > 0) {
+            const selectedCampsite = campsites[Math.floor(Math.random() * campsites.length)];
+            const availableActivities = this.activityManager.getAvailableActivitiesForCampsite(selectedCampsite);
+            if (availableActivities.length > 0) {
+                const activity = availableActivities[Math.floor(Math.random() * availableActivities.length)];
+                this.gameState.planningChoices.push({
+                    type: 'activity',
+                    title: 'New Activity',
+                    description: `Install ${activity.name} at ${selectedCampsite.name}`,
+                    cost: activity.cost,
+                    effect: `+${activity.happinessBonus} happiness`,
+                    action: () => this.activityManager.purchaseActivityForCampsite(selectedCampsite, activity.id)
+                });
+            }
         }
         
-        // Upgrade opportunities
-        const availableUpgrades = this.upgradeManager.getAvailableUpgrades();
-        if (availableUpgrades.length > 0) {
-            const upgrade = availableUpgrades[Math.floor(Math.random() * availableUpgrades.length)];
-            this.gameState.planningChoices.push({
-                type: 'upgrade',
-                title: 'Camp Improvement',
-                description: `Install ${upgrade.name}`,
-                cost: upgrade.cost,
-                effect: `+${upgrade.happinessBonus} happiness`,
-                action: () => this.upgradeManager.purchaseUpgrade(upgrade.id)
-            });
+        // Upgrade opportunities - select a random campsite
+        if (campsites.length > 0) {
+            const selectedCampsite = campsites[Math.floor(Math.random() * campsites.length)];
+            const availableUpgrades = this.upgradeManager.getAvailableUpgradesForCampsite(selectedCampsite);
+            if (availableUpgrades.length > 0) {
+                const upgrade = availableUpgrades[Math.floor(Math.random() * availableUpgrades.length)];
+                this.gameState.planningChoices.push({
+                    type: 'upgrade',
+                    title: 'Camp Improvement',
+                    description: `Install ${upgrade.name} at ${selectedCampsite.name}`,
+                    cost: upgrade.cost,
+                    effect: `+${upgrade.happinessBonus} happiness`,
+                    action: () => this.upgradeManager.purchaseUpgradeForCampsite(selectedCampsite, upgrade.id)
+                });
+            }
         }
         
         // Staff opportunities
@@ -380,10 +407,18 @@ class HighAdventureGame {
     processWeeklyVisitors() {
         const baseVisitors = 10 + (this.gameState.year - 1) * 5;
         const routeBonus = this.routeManager.getTotalRoutes() * 2;
-        const activityBonus = this.activityManager.getTotalActivities() * 3;
+        
+        // Calculate activity and upgrade bonuses per campsite
+        let totalActivityBonus = 0;
+        let totalUpgradeBonus = 0;
+        this.campsiteManager.getCampsites().forEach(campsite => {
+            totalActivityBonus += this.activityManager.getTotalActivitiesForCampsite(campsite) * 3;
+            totalUpgradeBonus += this.upgradeManager.getTotalVisitorBonusForCampsite(campsite);
+        });
+        
         const staffBonus = this.gameState.staff.guides * 5;
         
-        this.gameState.weeklyVisitors = Math.floor(baseVisitors + routeBonus + activityBonus + staffBonus);
+        this.gameState.weeklyVisitors = Math.floor(baseVisitors + routeBonus + totalActivityBonus + totalUpgradeBonus + staffBonus);
         this.gameState.totalVisitors += this.gameState.weeklyVisitors;
         
         // Calculate revenue
@@ -418,17 +453,16 @@ class HighAdventureGame {
         const routeQuality = this.routeManager.getAverageRouteQuality();
         happiness += routeQuality * 10;
         
-        // Activity variety bonus
-        const activityVariety = this.activityManager.getActivityVariety();
-        happiness += activityVariety * 5;
+        // Activity and upgrade bonuses per campsite
+        this.campsiteManager.getCampsites().forEach(campsite => {
+            const activityBonus = this.activityManager.getTotalHappinessBonusForCampsite(campsite);
+            const upgradeBonus = this.upgradeManager.getTotalUpgradeBonusForCampsite(campsite);
+            happiness += activityBonus + upgradeBonus;
+        });
         
         // Staff bonus
         happiness += this.gameState.staff.guides * 3;
         happiness += this.gameState.staff.maintenance * 2;
-        
-        // Upgrade bonus
-        const upgradeBonus = this.upgradeManager.getTotalUpgradeBonus();
-        happiness += upgradeBonus;
         
         happiness = Math.min(100, Math.max(0, happiness));
         this.gameState.avgHappiness = Math.round(happiness);
@@ -496,13 +530,21 @@ class HighAdventureGame {
     }
     
     calculateFinalScore() {
+        // Calculate total activities and upgrades across all campsites
+        let totalActivities = 0;
+        let totalUpgrades = 0;
+        this.campsiteManager.getCampsites().forEach(campsite => {
+            totalActivities += this.activityManager.getTotalActivitiesForCampsite(campsite);
+            totalUpgrades += this.upgradeManager.getCampsiteUpgrades(campsite).length;
+        });
+        
         const score = {
             totalVisitors: this.gameState.totalVisitors,
             totalRevenue: this.calculateTotalRevenue(),
             avgHappiness: this.gameState.avgHappiness,
             routeScore: this.routeManager.getTotalRoutes() * 100,
-            activityScore: this.activityManager.getTotalActivities() * 50,
-            upgradeScore: this.upgradeManager.getUpgrades().length * 75,
+            activityScore: totalActivities * 50,
+            upgradeScore: totalUpgrades * 75,
             staffScore: (this.gameState.staff.guides + this.gameState.staff.maintenance) * 200,
             finalScore: 0
         };
@@ -554,11 +596,11 @@ class HighAdventureGame {
                             </div>
                             <div class="score-item">
                                 <span class="score-label">Activities:</span>
-                                <span class="score-value">${this.activityManager.getTotalActivities()}</span>
+                                <span class="score-value">${totalActivities}</span>
                             </div>
                             <div class="score-item">
                                 <span class="score-label">Upgrades:</span>
-                                <span class="score-value">${this.upgradeManager.getUpgrades().length}</span>
+                                <span class="score-value">${totalUpgrades}</span>
                             </div>
                             <div class="score-item">
                                 <span class="score-label">Staff Members:</span>

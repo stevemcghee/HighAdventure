@@ -1,7 +1,6 @@
 // Upgrade manager for camp improvements
 class UpgradeManager {
     constructor() {
-        this.upgrades = [];
         this.gameState = null;
         this.availableUpgrades = [
             {
@@ -119,9 +118,8 @@ class UpgradeManager {
         this.gameState = gameState;
     }
     
-    initializeUpgrades() {
-        // Start with basic upgrades - don't call purchaseUpgrade here
-        // Just add the upgrade directly to avoid the window.game dependency
+    initializeUpgrades(campsite) {
+        // Start with basic upgrades for the campsite
         const upgradeData = this.availableUpgrades.find(u => u.id === 'better_trails');
         if (upgradeData) {
             const upgrade = {
@@ -130,11 +128,14 @@ class UpgradeManager {
                 level: 1,
                 effectiveness: 100
             };
-            this.upgrades.push(upgrade);
+            if (!campsite.upgrades) {
+                campsite.upgrades = [];
+            }
+            campsite.upgrades.push(upgrade);
         }
     }
     
-    purchaseUpgrade(upgradeId) {
+    purchaseUpgradeForCampsite(campsite, upgradeId) {
         const upgradeData = this.availableUpgrades.find(u => u.id === upgradeId);
         if (!upgradeData) return false;
         
@@ -154,8 +155,11 @@ class UpgradeManager {
                 effectiveness: 100
             };
             
-            this.upgrades.push(upgrade);
-            window.game.addMessage(`Purchased ${upgradeData.name} for $${upgradeData.cost}`);
+            if (!campsite.upgrades) {
+                campsite.upgrades = [];
+            }
+            campsite.upgrades.push(upgrade);
+            window.game.addMessage(`Purchased ${upgradeData.name} for ${campsite.name} for $${upgradeData.cost}`);
             return true;
         } else {
             window.game.addMessage("Not enough money to purchase upgrade!");
@@ -163,8 +167,8 @@ class UpgradeManager {
         }
     }
     
-    upgradeExisting(upgradeId) {
-        const upgrade = this.getUpgradeById(upgradeId);
+    upgradeExistingForCampsite(campsite, upgradeId) {
+        const upgrade = this.getUpgradeById(campsite, upgradeId);
         if (!upgrade) return false;
         
         const upgradeCost = upgrade.cost * 0.7; // 70% of original cost
@@ -180,7 +184,7 @@ class UpgradeManager {
             upgrade.level++;
             upgrade.effectiveness = Math.min(100, upgrade.effectiveness + 10);
             
-            window.game.addMessage(`Upgraded ${upgrade.name} to level ${upgrade.level} for $${upgradeCost}`);
+            window.game.addMessage(`Upgraded ${upgrade.name} at ${campsite.name} to level ${upgrade.level} for $${upgradeCost}`);
             return true;
         } else {
             window.game.addMessage("Not enough money to upgrade!");
@@ -188,52 +192,53 @@ class UpgradeManager {
         }
     }
     
-    getUpgrades() {
-        return this.upgrades;
+    getCampsiteUpgrades(campsite) {
+        return campsite.upgrades || [];
     }
     
-    getAvailableUpgrades() {
+    getAvailableUpgradesForCampsite(campsite) {
+        const installedUpgrades = this.getCampsiteUpgrades(campsite);
         return this.availableUpgrades.filter(upgrade => 
-            !this.upgrades.some(purchased => purchased.id === upgrade.id)
+            !installedUpgrades.some(installed => installed.id === upgrade.id)
         );
     }
     
-    getUpgradeById(id) {
-        return this.upgrades.find(u => u.id === id);
+    getUpgradeById(campsite, id) {
+        return this.getCampsiteUpgrades(campsite).find(u => u.id === id);
     }
     
-    getTotalUpgradeBonus() {
-        return this.upgrades.reduce((total, upgrade) => {
+    getTotalUpgradeBonusForCampsite(campsite) {
+        return this.getCampsiteUpgrades(campsite).reduce((total, upgrade) => {
             return total + (upgrade.happinessBonus * (upgrade.effectiveness / 100) * upgrade.level);
         }, 0);
     }
     
-    getTotalVisitorBonus() {
-        return this.upgrades.reduce((total, upgrade) => {
+    getTotalVisitorBonusForCampsite(campsite) {
+        return this.getCampsiteUpgrades(campsite).reduce((total, upgrade) => {
             return total + (upgrade.visitorBonus * (upgrade.effectiveness / 100) * upgrade.level);
         }, 0);
     }
     
-    getUpgradesByCategory(category) {
-        return this.upgrades.filter(u => u.category === category);
+    getUpgradesByCategoryForCampsite(campsite, category) {
+        return this.getCampsiteUpgrades(campsite).filter(u => u.category === category);
     }
     
-    getUpgradeCategories() {
-        const categories = [...new Set(this.upgrades.map(u => u.category))];
+    getUpgradeCategoriesForCampsite(campsite) {
+        const categories = [...new Set(this.getCampsiteUpgrades(campsite).map(u => u.category))];
         return categories;
     }
     
-    // Simulate upgrade effectiveness changes over time
-    updateUpgradeEffectiveness() {
-        this.upgrades.forEach(upgrade => {
+    // Simulate upgrade effectiveness changes over time for a campsite
+    updateUpgradeEffectivenessForCampsite(campsite) {
+        this.getCampsiteUpgrades(campsite).forEach(upgrade => {
             // Random effectiveness changes
             const change = (Math.random() - 0.5) * 5;
             upgrade.effectiveness = Math.max(50, Math.min(100, upgrade.effectiveness + change));
         });
     }
     
-    // Get upgrade recommendations based on current state
-    getUpgradeRecommendations() {
+    // Get upgrade recommendations based on campsite state
+    getUpgradeRecommendationsForCampsite(campsite) {
         const recommendations = [];
         
         // Check if game is available
@@ -243,54 +248,55 @@ class UpgradeManager {
         
         const gameState = window.game.getGameState();
         
-        // Recommend safety upgrades if happiness is low
-        if (gameState.avgHappiness < 60) {
+        // Recommend safety upgrades if campsite is at high elevation
+        if (campsite.elevation > 7000) {
             recommendations.push('emergency_equipment', 'weather_station');
         }
         
-        // Recommend facility upgrades if visitor count is high
-        if (gameState.weeklyVisitors > 50) {
+        // Recommend facility upgrades if campsite has high capacity
+        if (campsite.capacity > 40) {
             recommendations.push('comfort_stations', 'campground_kitchen');
         }
         
-        // Recommend sustainability upgrades for long-term benefits
-        if (gameState.year > 2) {
-            recommendations.push('solar_panels');
+        // Recommend water-related upgrades if campsite has water facilities
+        if (campsite.facilities.includes('water_source')) {
+            recommendations.push('water_filters');
         }
         
         return recommendations.filter((id, index, arr) => arr.indexOf(id) === index);
     }
     
-    // Calculate upgrade maintenance costs
-    calculateMaintenanceCosts() {
-        return this.upgrades.reduce((total, upgrade) => {
+    // Calculate upgrade maintenance costs for a campsite
+    calculateMaintenanceCostsForCampsite(campsite) {
+        return this.getCampsiteUpgrades(campsite).reduce((total, upgrade) => {
             return total + (upgrade.cost * 0.05 * upgrade.level); // 5% of original cost per level
         }, 0);
     }
     
-    // Get upgrade statistics
-    getUpgradeStats() {
+    // Get upgrade statistics for a campsite
+    getUpgradeStatsForCampsite(campsite) {
+        const upgrades = this.getCampsiteUpgrades(campsite);
         return {
-            totalUpgrades: this.upgrades.length,
-            totalHappinessBonus: this.getTotalUpgradeBonus(),
-            totalVisitorBonus: this.getTotalVisitorBonus(),
-            averageLevel: this.upgrades.length > 0 ? 
-                this.upgrades.reduce((sum, u) => sum + u.level, 0) / this.upgrades.length : 0,
-            averageEffectiveness: this.upgrades.length > 0 ? 
-                this.upgrades.reduce((sum, u) => sum + u.effectiveness, 0) / this.upgrades.length : 0
+            totalUpgrades: upgrades.length,
+            totalHappinessBonus: this.getTotalUpgradeBonusForCampsite(campsite),
+            totalVisitorBonus: this.getTotalVisitorBonusForCampsite(campsite),
+            averageLevel: upgrades.length > 0 ? 
+                upgrades.reduce((sum, u) => sum + u.level, 0) / upgrades.length : 0,
+            averageEffectiveness: upgrades.length > 0 ? 
+                upgrades.reduce((sum, u) => sum + u.effectiveness, 0) / upgrades.length : 0
         };
     }
     
     // Get upgrade cost for next level
-    getUpgradeCost(upgradeId) {
-        const upgrade = this.getUpgradeById(upgradeId);
+    getUpgradeCost(campsite, upgradeId) {
+        const upgrade = this.getUpgradeById(campsite, upgradeId);
         if (!upgrade) return 0;
         
         return Math.round(upgrade.cost * 0.7);
     }
     
-    // Check if upgrade can be purchased
-    canPurchaseUpgrade(upgradeId) {
+    // Check if upgrade can be purchased for a campsite
+    canPurchaseUpgradeForCampsite(campsite, upgradeId) {
         const upgradeData = this.availableUpgrades.find(u => u.id === upgradeId);
         if (!upgradeData) return false;
         
@@ -302,9 +308,9 @@ class UpgradeManager {
         return window.game.getGameState().money >= upgradeData.cost;
     }
     
-    // Check if upgrade can be upgraded
-    canUpgradeExisting(upgradeId) {
-        const upgrade = this.getUpgradeById(upgradeId);
+    // Check if upgrade can be upgraded for a campsite
+    canUpgradeExistingForCampsite(campsite, upgradeId) {
+        const upgrade = this.getUpgradeById(campsite, upgradeId);
         if (!upgrade) return false;
         
         const upgradeCost = upgrade.cost * 0.7;

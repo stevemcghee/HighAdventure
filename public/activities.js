@@ -1,7 +1,6 @@
 // Activity manager for campsite activities
 class ActivityManager {
     constructor() {
-        this.activities = [];
         this.gameState = null;
         this.availableActivities = [
             {
@@ -101,13 +100,13 @@ class ActivityManager {
         this.gameState = gameState;
     }
     
-    initializeActivities() {
-        // Start with a few basic activities
-        this.addActivity('campfire_stories');
-        this.addActivity('wildlife_viewing');
+    initializeActivities(campsite) {
+        // Start with a few basic activities for the campsite
+        this.addActivityToCampsite(campsite, 'campfire_stories');
+        this.addActivityToCampsite(campsite, 'wildlife_viewing');
     }
     
-    addActivity(activityId) {
+    addActivityToCampsite(campsite, activityId) {
         const activityData = this.availableActivities.find(a => a.id === activityId);
         if (!activityData) return false;
         
@@ -118,33 +117,37 @@ class ActivityManager {
             satisfaction: 100
         };
         
-        this.activities.push(activity);
+        if (!campsite.activities) {
+            campsite.activities = [];
+        }
+        campsite.activities.push(activity);
         return true;
     }
     
-    getActivities() {
-        return this.activities;
+    getCampsiteActivities(campsite) {
+        return campsite.activities || [];
     }
     
-    getAvailableActivities() {
+    getAvailableActivitiesForCampsite(campsite) {
+        const installedActivities = this.getCampsiteActivities(campsite);
         return this.availableActivities.filter(activity => 
-            !this.activities.some(installed => installed.id === activity.id)
+            !installedActivities.some(installed => installed.id === activity.id)
         );
     }
     
-    getTotalActivities() {
-        return this.activities.length;
+    getTotalActivitiesForCampsite(campsite) {
+        return this.getCampsiteActivities(campsite).length;
     }
     
-    getActivityVariety() {
-        return this.activities.length;
+    getActivityVarietyForCampsite(campsite) {
+        return this.getCampsiteActivities(campsite).length;
     }
     
-    getActivityById(id) {
-        return this.activities.find(a => a.id === id);
+    getActivityById(campsite, id) {
+        return this.getCampsiteActivities(campsite).find(a => a.id === id);
     }
     
-    purchaseActivity(activityId) {
+    purchaseActivityForCampsite(campsite, activityId) {
         const activityData = this.availableActivities.find(a => a.id === activityId);
         if (!activityData) return false;
         
@@ -156,8 +159,8 @@ class ActivityManager {
         
         if (window.game.getGameState().money >= activityData.cost) {
             window.game.getGameState().money -= activityData.cost;
-            this.addActivity(activityId);
-            window.game.addMessage(`Added ${activityData.name} activity for $${activityData.cost}`);
+            this.addActivityToCampsite(campsite, activityId);
+            window.game.addMessage(`Added ${activityData.name} activity to ${campsite.name} for $${activityData.cost}`);
             return true;
         } else {
             window.game.addMessage("Not enough money to purchase activity!");
@@ -165,19 +168,19 @@ class ActivityManager {
         }
     }
     
-    getTotalHappinessBonus() {
-        return this.activities.reduce((total, activity) => {
+    getTotalHappinessBonusForCampsite(campsite) {
+        return this.getCampsiteActivities(campsite).reduce((total, activity) => {
             return total + (activity.happinessBonus * (activity.satisfaction / 100));
         }, 0);
     }
     
-    getActivityPopularity() {
-        return this.activities.reduce((total, activity) => total + activity.popularity, 0);
+    getActivityPopularityForCampsite(campsite) {
+        return this.getCampsiteActivities(campsite).reduce((total, activity) => total + activity.popularity, 0);
     }
     
-    // Simulate activity satisfaction changes over time
-    updateActivitySatisfaction() {
-        this.activities.forEach(activity => {
+    // Simulate activity satisfaction changes over time for a campsite
+    updateActivitySatisfactionForCampsite(campsite) {
+        this.getCampsiteActivities(campsite).forEach(activity => {
             // Random satisfaction changes
             const change = (Math.random() - 0.5) * 10;
             activity.satisfaction = Math.max(0, Math.min(100, activity.satisfaction + change));
@@ -190,10 +193,10 @@ class ActivityManager {
     }
     
     // Get activities suitable for specific campsites
-    getActivitiesForCampsite(campsite) {
+    getSuitableActivitiesForCampsite(campsite) {
         const suitableActivities = [];
         
-        this.activities.forEach(activity => {
+        this.availableActivities.forEach(activity => {
             let suitable = true;
             
             // Check elevation requirements
@@ -235,11 +238,11 @@ class ActivityManager {
         return recommendations.filter((id, index, arr) => arr.indexOf(id) === index);
     }
     
-    // Calculate activity revenue
-    calculateActivityRevenue() {
+    // Calculate activity revenue for a campsite
+    calculateActivityRevenueForCampsite(campsite) {
         let revenue = 0;
         
-        this.activities.forEach(activity => {
+        this.getCampsiteActivities(campsite).forEach(activity => {
             const baseRevenue = activity.popularity * 10;
             const satisfactionMultiplier = activity.satisfaction / 100;
             revenue += baseRevenue * satisfactionMultiplier;
@@ -248,14 +251,15 @@ class ActivityManager {
         return Math.round(revenue);
     }
     
-    // Get activity statistics
-    getActivityStats() {
+    // Get activity statistics for a campsite
+    getActivityStatsForCampsite(campsite) {
+        const activities = this.getCampsiteActivities(campsite);
         return {
-            totalActivities: this.activities.length,
-            totalHappinessBonus: this.getTotalHappinessBonus(),
-            totalPopularity: this.getActivityPopularity(),
-            averageSatisfaction: this.activities.length > 0 ? 
-                this.activities.reduce((sum, a) => sum + a.satisfaction, 0) / this.activities.length : 0
+            totalActivities: activities.length,
+            totalHappinessBonus: this.getTotalHappinessBonusForCampsite(campsite),
+            totalPopularity: this.getActivityPopularityForCampsite(campsite),
+            averageSatisfaction: activities.length > 0 ? 
+                activities.reduce((sum, a) => sum + a.satisfaction, 0) / activities.length : 0
         };
     }
 } 
