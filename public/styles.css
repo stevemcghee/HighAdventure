@@ -298,6 +298,117 @@ body {
     font-size: 0.9em;
 }
 
+.route-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.route-header h3 {
+    color: #1e293b;
+    font-size: 1.2em;
+    margin: 0;
+}
+
+.route-difficulty {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.route-difficulty.easy {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.route-difficulty.moderate {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.route-difficulty.difficult {
+    background: #fed7aa;
+    color: #c2410c;
+}
+
+.route-difficulty.expert {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.route-details {
+    margin-bottom: 15px;
+}
+
+.route-connection {
+    font-size: 1.1em;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.route-distance {
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.route-stats {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.route-stats .stat {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.route-features {
+    margin-bottom: 15px;
+}
+
+.route-features h5 {
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+}
+
+.feature-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.feature-tag {
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.route-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.route-actions button {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.9em;
+}
+
 .activities-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

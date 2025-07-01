@@ -243,7 +243,6 @@ class GameUI {
         const from = document.getElementById('route-from').value;
         const to = document.getElementById('route-to').value;
         const difficulty = document.getElementById('route-difficulty').value;
-        const distance = parseInt(document.getElementById('route-distance').value);
         
         if (from === to) {
             this.addMessage("Cannot create route to the same campsite!");
@@ -256,9 +255,9 @@ class GameUI {
             return;
         }
         
-        const route = this.game.getRouteManager().createRoute(from, to, difficulty, distance);
+        const route = this.game.getRouteManager().createRoute(from, to, difficulty);
         if (route) {
-            this.addMessage(`Created route from ${from} to ${to} for $${route.cost}`);
+            this.addMessage(`Created ${route.name} (${route.distance}mi) for $${route.cost}`);
             this.updateRoutesList();
             // Re-render the mountain to show the new route
             if (this.game.getMountain()) {
@@ -441,15 +440,38 @@ class GameUI {
         let html = '<div class="routes-grid">';
         routes.forEach(route => {
             const color = this.getDifficultyColor(route.difficulty);
+            const difficultyIcon = this.getDifficultyIcon(route.difficulty);
             html += `
                 <div class="route-card" style="border-left: 4px solid ${color}">
-                    <h4>${route.from} → ${route.to}</h4>
-                    <p><strong>Difficulty:</strong> ${route.difficulty}</p>
-                    <p><strong>Distance:</strong> ${route.distance} miles</p>
-                    <p><strong>Quality:</strong> ${route.quality}%</p>
-                    <p><strong>Maintenance:</strong> ${route.maintenance}%</p>
-                    <button onclick="window.game.getRouteManager().upgradeRoute(${route.id})" 
-                            class="secondary-button">Upgrade</button>
+                    <div class="route-header">
+                        <h3>${route.name || 'Unnamed Trail'}</h3>
+                        <span class="route-difficulty ${route.difficulty}">
+                            ${difficultyIcon} ${route.difficulty.charAt(0).toUpperCase() + route.difficulty.slice(1)}
+                        </span>
+                    </div>
+                    <div class="route-details">
+                        <p class="route-connection"><strong>${route.from}</strong> → <strong>${route.to}</strong></p>
+                        <p class="route-distance">${route.distance} miles</p>
+                        <div class="route-stats">
+                            <span class="stat">Quality: ${route.quality}%</span>
+                            <span class="stat">Maintenance: ${route.maintenance}%</span>
+                            <span class="stat">Popularity: ${route.popularity}</span>
+                        </div>
+                    </div>
+                    ${route.features && route.features.length > 0 ? `
+                        <div class="route-features">
+                            <h5>Features:</h5>
+                            <div class="feature-tags">
+                                ${route.features.map(feature => `<span class="feature-tag">${feature}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    <div class="route-actions">
+                        <button onclick="window.game.getRouteManager().upgradeRoute(${route.id})" 
+                                class="secondary-button">Upgrade</button>
+                        <button onclick="window.game.getRouteManager().maintainRoute(${route.id})" 
+                                class="secondary-button">Maintain</button>
+                    </div>
                 </div>
             `;
         });
@@ -607,6 +629,16 @@ class GameUI {
             case 'difficult': return '#f97316';
             case 'expert': return '#dc2626';
             default: return '#6b7280';
+        }
+    }
+    
+    getDifficultyIcon(difficulty) {
+        switch (difficulty) {
+            case 'easy': return '🥾';
+            case 'moderate': return '🏔️';
+            case 'difficult': return '⛰️';
+            case 'expert': return '🧗';
+            default: return '🚶';
         }
     }
     

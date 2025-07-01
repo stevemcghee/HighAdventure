@@ -76,31 +76,28 @@ class HighAdventureGame {
             return;
         }
         
-        // Create 3 connected routes in a triangle pattern
+        // Create 3 connected routes in a triangle pattern with calculated distances
         const route1 = this.routeManager.createRoute(
             campsites[0].name, 
             campsites[1].name, 
-            'moderate', 
-            4
+            'moderate'
         );
         
         const route2 = this.routeManager.createRoute(
             campsites[1].name, 
             campsites[2].name, 
-            'easy', 
-            3
+            'easy'
         );
         
         const route3 = this.routeManager.createRoute(
             campsites[2].name, 
             campsites[0].name, 
-            'difficult', 
-            5
+            'difficult'
         );
         
         if (route1 && route2 && route3) {
             console.log('Created initial routes:', route1, route2, route3);
-            this.addMessage(`Created initial trail network connecting ${campsites[0].name}, ${campsites[1].name}, and ${campsites[2].name}`);
+            this.addMessage(`Created initial trail network: ${route1.name} (${route1.distance}mi), ${route2.name} (${route2.distance}mi), and ${route3.name} (${route3.distance}mi)`);
         } else {
             console.log('Failed to create some initial routes');
         }
@@ -193,9 +190,9 @@ class HighAdventureGame {
                     cost: 2000,
                     effect: '+2 visitors per week',
                     action: () => {
-                        const route = this.routeManager.createRoute(routePair.from, routePair.to, 'moderate', 5);
+                        const route = this.routeManager.createRoute(routePair.from, routePair.to, 'moderate');
                         if (route) {
-                            this.addMessage(`Created new trail from ${routePair.from} to ${routePair.to}`);
+                            this.addMessage(`Created new trail: ${route.name} (${route.distance}mi)`);
                             // Re-render the mountain to show the new route
                             if (this.mountain) {
                                 this.mountain.render();

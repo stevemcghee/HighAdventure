@@ -10,27 +10,154 @@ class RouteManager {
         this.campsiteManager = campsiteManager;
     }
     
-    createRoute(from, to, difficulty, distance) {
+    createRoute(from, to, difficulty, distance = null) {
         // Check if route already exists between these campsites
         if (this.routeExists(from, to)) {
             console.log(`Route already exists between ${from} and ${to}`);
             return null; // Return null to indicate failure
         }
         
+        // Calculate actual distance if not provided
+        if (distance === null) {
+            distance = this.calculateActualDistance(from, to, difficulty);
+        }
+        
         const route = {
             id: this.routeIdCounter++,
             from: from,
             to: to,
+            name: this.generateRouteName(from, to, difficulty, distance),
             difficulty: difficulty,
             distance: distance,
             quality: this.calculateRouteQuality(difficulty, distance),
             maintenance: 100, // Starts at 100%
             popularity: 0,
-            cost: this.calculateRouteCost(difficulty, distance)
+            cost: this.calculateRouteCost(difficulty, distance),
+            features: this.generateRouteFeatures(difficulty, distance)
         };
         
         this.routes.push(route);
         return route;
+    }
+    
+    calculateActualDistance(from, to, difficulty) {
+        // Get campsite positions from the mountain
+        if (!window.game || !window.game.getMountain) {
+            console.warn('Game not available for distance calculation, using default');
+            return 5; // Default fallback
+        }
+        
+        const mountain = window.game.getMountain();
+        const campsites = mountain.getCampsites();
+        
+        const fromCampsite = campsites.find(c => c.name === from);
+        const toCampsite = campsites.find(c => c.name === to);
+        
+        if (!fromCampsite || !toCampsite) {
+            console.warn('Campsites not found for distance calculation');
+            return 5; // Default fallback
+        }
+        
+        // Calculate Euclidean distance between campsites
+        const dx = fromCampsite.x - toCampsite.x;
+        const dy = fromCampsite.y - toCampsite.y;
+        const rawDistance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Convert to realistic miles (assuming 100 units = ~20 miles)
+        // This gives us a reasonable scale where nearby campsites are 2-8 miles apart
+        const milesPerUnit = 0.2;
+        const baseDistance = rawDistance * milesPerUnit;
+        
+        // Add some terrain complexity factor based on difficulty
+        let terrainMultiplier = 1.0;
+        switch (difficulty) {
+            case 'easy': terrainMultiplier = 1.1; break; // Easy routes are slightly longer due to gentle paths
+            case 'moderate': terrainMultiplier = 1.3; break; // Moderate routes wind more
+            case 'difficult': terrainMultiplier = 1.6; break; // Difficult routes take complex paths
+            case 'expert': terrainMultiplier = 2.0; break; // Expert routes are very winding
+        }
+        
+        const finalDistance = Math.round(baseDistance * terrainMultiplier * 10) / 10; // Round to 1 decimal place
+        
+        // Ensure minimum distance of 1 mile and maximum of 15 miles
+        return Math.max(1, Math.min(15, finalDistance));
+    }
+    
+    generateRouteName(from, to, difficulty, distance) {
+        const trailNames = [
+            'Eagle Ridge Trail', 'Bear Creek Path', 'Mountain Vista Way', 'Pine Ridge Route',
+            'Crystal Lake Trail', 'Thunder Peak Path', 'Wildflower Ridge', 'Sunset Summit Trail',
+            'Raven\'s Roost Route', 'Misty Valley Trail', 'Golden Eagle Path', 'Starlight Ridge',
+            'Cascade Falls Trail', 'Alpine Meadow Path', 'Whispering Pines Route', 'Eagle\'s Nest Trail',
+            'Crystal Peak Path', 'Mountain Stream Trail', 'Highland Ridge Route', 'Valley Vista Trail',
+            'Thunder Ridge Path', 'Bear Mountain Trail', 'Pine Valley Route', 'Summit Ridge Trail',
+            'Wilderness Way', 'Alpine Pass Trail', 'Mountain View Path', 'Crystal Ridge Route',
+            'Eagle Peak Trail', 'Thunder Valley Path', 'Pine Summit Route', 'Bear Ridge Trail'
+        ];
+        
+        // Select a name based on difficulty and distance
+        let nameIndex = (this.routeIdCounter * 7) % trailNames.length; // Use route ID for variety
+        
+        // Adjust based on difficulty
+        if (difficulty === 'expert') {
+            nameIndex = (nameIndex + 10) % trailNames.length; // Use more dramatic names
+        } else if (difficulty === 'easy') {
+            nameIndex = (nameIndex + 5) % trailNames.length; // Use gentler names
+        }
+        
+        return trailNames[nameIndex];
+    }
+    
+    generateRouteFeatures(difficulty, distance) {
+        const features = [];
+        
+        // Distance-based features
+        if (distance >= 8) {
+            features.push('Scenic Overlooks');
+            features.push('Rest Areas');
+        } else if (distance >= 5) {
+            features.push('View Points');
+        }
+        
+        // Difficulty-based features
+        switch (difficulty) {
+            case 'easy':
+                features.push('Family Friendly');
+                features.push('Wide Path');
+                break;
+            case 'moderate':
+                features.push('Rocky Sections');
+                features.push('Steep Climbs');
+                break;
+            case 'difficult':
+                features.push('Technical Terrain');
+                features.push('Exposed Sections');
+                features.push('Rope Assists');
+                break;
+            case 'expert':
+                features.push('Extreme Terrain');
+                features.push('Climbing Sections');
+                features.push('Narrow Ledges');
+                features.push('Weather Dependent');
+                break;
+        }
+        
+        // Add some random features
+        const randomFeatures = [
+            'Wildlife Viewing', 'Historical Sites', 'Water Crossings', 'Cave Systems',
+            'Mountain Lakes', 'Alpine Meadows', 'Old Growth Forest', 'Rock Formations',
+            'Waterfalls', 'Mountain Streams', 'Wildflower Fields', 'Boulder Fields'
+        ];
+        
+        const numRandom = Math.floor(Math.random() * 2) + 1; // 1-2 random features
+        for (let i = 0; i < numRandom; i++) {
+            const randomIndex = Math.floor(Math.random() * randomFeatures.length);
+            if (!features.includes(randomFeatures[randomIndex])) {
+                features.push(randomFeatures[randomIndex]);
+            }
+        }
+        
+        return features;
     }
     
     calculateRouteQuality(difficulty, distance) {
@@ -113,7 +240,7 @@ class RouteManager {
             route.maintenance = 100;
             route.cost = Math.round(route.cost * 1.2); // 20% price increase
             
-            window.game.addMessage(`Upgraded route from ${route.from} to ${route.to} for $${upgradeCost}`);
+            window.game.addMessage(`Upgraded ${route.name} for $${upgradeCost}`);
             return true;
         } else {
             window.game.addMessage("Not enough money to upgrade route!");
@@ -137,7 +264,7 @@ class RouteManager {
             window.game.getGameState().money -= maintenanceCost;
             route.maintenance = 100;
             
-            window.game.addMessage(`Maintained route from ${route.from} to ${route.to} for $${maintenanceCost}`);
+            window.game.addMessage(`Maintained ${route.name} for $${maintenanceCost}`);
             return true;
         } else {
             window.game.addMessage("Not enough money for maintenance!");

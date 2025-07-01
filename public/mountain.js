@@ -246,23 +246,188 @@ class MountainGenerator {
                 const toX = toCampsite.x * (this.width / 100);
                 const toY = toCampsite.y * (this.height / 100);
                 
-                // Draw route line
+                // Use A* pathfinding to avoid steep terrain
+                const pathPoints = this.generateAStarPath(fromX, fromY, toX, toY);
+                
+                // Draw route path
                 this.ctx.strokeStyle = this.getRouteColor(route.difficulty);
                 this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
-                this.ctx.moveTo(fromX, fromY);
-                this.ctx.lineTo(toX, toY);
+                
+                if (pathPoints.length > 0) {
+                    this.ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+                    for (let i = 1; i < pathPoints.length; i++) {
+                        this.ctx.lineTo(pathPoints[i].x, pathPoints[i].y);
+                    }
+                } else {
+                    // Fallback to straight line if path generation fails
+                    this.ctx.moveTo(fromX, fromY);
+                    this.ctx.lineTo(toX, toY);
+                }
+                
                 this.ctx.stroke();
                 
                 // Draw route label
                 this.ctx.fillStyle = '#333';
-                this.ctx.font = '10px Arial';
+                this.ctx.font = 'bold 10px Arial';
                 this.ctx.textAlign = 'center';
                 const midX = (fromX + toX) / 2;
                 const midY = (fromY + toY) / 2;
-                this.ctx.fillText(`${route.distance}mi`, midX, midY - 5);
+                
+                // Draw route name
+                if (route.name) {
+                    this.ctx.fillText(route.name, midX, midY - 15);
+                }
+                
+                // Draw distance
+                this.ctx.font = '9px Arial';
+                this.ctx.fillText(`${route.distance}mi`, midX, midY - 2);
             }
         });
+    }
+    
+    // A* pathfinding on the terrain grid to avoid steep elevation changes
+    generateAStarPath(fromX, fromY, toX, toY) {
+        const gridSize = 100;
+        const start = {
+            x: Math.round(fromX * gridSize / this.width),
+            y: Math.round(fromY * gridSize / this.height)
+        };
+        const end = {
+            x: Math.round(toX * gridSize / this.width),
+            y: Math.round(toY * gridSize / this.height)
+        };
+        
+        // Node structure: {x, y, g, h, f, parent}
+        const openSet = [];
+        const closedSet = new Set();
+        const nodeMap = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+        
+        function heuristic(a, b) {
+            // Euclidean distance
+            return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+        }
+        
+        function nodeKey(x, y) {
+            return `${x},${y}`;
+        }
+        
+        // Cost function: penalize steep elevation changes
+        const getCost = (x1, y1, x2, y2) => {
+            const h1 = this.getTerrainHeightAt(x1, y1);
+            const h2 = this.getTerrainHeightAt(x2, y2);
+            const base = 1;
+            const elevationDiff = Math.abs(h2 - h1);
+            // Heavily penalize steep slopes
+            return base + elevationDiff * 30 + (elevationDiff > 0.15 ? 100 : 0);
+        };
+        
+        // Initialize start node
+        const startNode = {
+            x: start.x,
+            y: start.y,
+            g: 0,
+            h: heuristic(start, end),
+            f: 0 + heuristic(start, end),
+            parent: null
+        };
+        openSet.push(startNode);
+        nodeMap[start.x][start.y] = startNode;
+        
+        const directions = [
+            [1, 0], [-1, 0], [0, 1], [0, -1],
+            [1, 1], [1, -1], [-1, 1], [-1, -1]
+        ];
+        
+        let found = false;
+        let endNode = null;
+        while (openSet.length > 0) {
+            // Get node with lowest f
+            openSet.sort((a, b) => a.f - b.f);
+            const current = openSet.shift();
+            if (current.x === end.x && current.y === end.y) {
+                found = true;
+                endNode = current;
+                break;
+            }
+            closedSet.add(nodeKey(current.x, current.y));
+            
+            for (const [dx, dy] of directions) {
+                const nx = current.x + dx;
+                const ny = current.y + dy;
+                if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize) continue;
+                if (closedSet.has(nodeKey(nx, ny))) continue;
+                
+                const cost = getCost.call(this, current.x, current.y, nx, ny);
+                if (cost > 50) continue; // Impassable if too steep
+                
+                const g = current.g + cost;
+                const h = heuristic({ x: nx, y: ny }, end);
+                const f = g + h;
+                
+                let neighbor = nodeMap[nx][ny];
+                if (!neighbor || g < neighbor.g) {
+                    neighbor = {
+                        x: nx,
+                        y: ny,
+                        g,
+                        h,
+                        f,
+                        parent: current
+                    };
+                    nodeMap[nx][ny] = neighbor;
+                    openSet.push(neighbor);
+                }
+            }
+        }
+        
+        // Reconstruct path
+        const path = [];
+        if (found && endNode) {
+            let node = endNode;
+            while (node) {
+                // Convert grid coords to screen coords
+                path.unshift({
+                    x: node.x * this.width / gridSize,
+                    y: node.y * this.height / gridSize
+                });
+                node = node.parent;
+            }
+        }
+        return path;
+    }
+    
+    getTerrainHeightAt(x, y) {
+        const terrainX = Math.floor(x);
+        const terrainY = Math.floor(y);
+        
+        if (terrainX >= 0 && terrainX < this.terrain.length && 
+            terrainY >= 0 && terrainY < this.terrain[0].length) {
+            return this.terrain[terrainX][terrainY];
+        }
+        return 0;
+    }
+    
+    getTerrainGradientX(x, y) {
+        const terrainX = Math.floor(x);
+        const terrainY = Math.floor(y);
+        
+        if (terrainX <= 0 || terrainX >= this.terrain.length - 1) return 0;
+        
+        const left = this.getTerrainHeightAt(terrainX - 1, terrainY);
+        const right = this.getTerrainHeightAt(terrainX + 1, terrainY);
+        return right - left;
+    }
+    
+    getTerrainGradientY(x, y) {
+        const terrainX = Math.floor(x);
+        const terrainY = Math.floor(y);
+        
+        if (terrainY <= 0 || terrainY >= this.terrain[0].length - 1) return 0;
+        
+        const top = this.getTerrainHeightAt(terrainX, terrainY - 1);
+        const bottom = this.getTerrainHeightAt(terrainX, terrainY + 1);
+        return bottom - top;
     }
     
     getRouteColor(difficulty) {
