@@ -378,7 +378,7 @@ class MountainGenerator {
         this.ctx.translate(-this.width / 2 + this.offsetX, -this.height / 2 + this.offsetY);
         
         // Draw terrain
-        this.drawTerrain();
+        this.drawIsometricTerrain();
         
         // Draw lakes
         this.drawLakes();
@@ -399,202 +399,229 @@ class MountainGenerator {
         console.log('Mountain render completed');
     }
     
-    drawTerrain() {
+    drawIsometricTerrain() {
         const terrainWidth = this.terrain.length;
         const terrainHeight = this.terrain[0].length;
-        
+
         // Clear canvas with transparent background
         this.ctx.clearRect(0, 0, this.width, this.height);
-        
-        // Draw terrain using square pixels with exact boundaries
-        const cellWidth = this.width / terrainWidth;
-        const cellHeight = this.height / terrainHeight;
-        
-        // Disable anti-aliasing for crisp pixels
-        this.ctx.imageSmoothingEnabled = false;
-        
+
+        const tileWidth = 10; // Width of a single isometric tile
+        const tileHeight = tileWidth * 0.5; // Height of a single isometric tile
+
+        // Center the map
+        const centerX = this.width / 2;
+        const centerY = this.height / 4;
+
         for (let x = 0; x < terrainWidth; x++) {
             for (let y = 0; y < terrainHeight; y++) {
                 const height = this.terrain[x][y];
-                const screenX = Math.floor(x * cellWidth);
-                const screenY = Math.floor(y * cellHeight);
-                const pixelWidth = Math.ceil(cellWidth);
-                const pixelHeight = Math.ceil(cellHeight);
-                
+
+                // Convert grid coordinates to isometric coordinates
+                const isoX = (x - y) * tileWidth / 2;
+                const isoY = (x + y) * tileHeight / 2;
+
+                // Apply centering and height offset
+                const screenX = centerX + isoX;
+                const screenY = centerY + isoY - height * 20; // Scale height for visibility
+
                 // Check if this pixel is part of a lake
                 let isLake = false;
                 for (const lake of this.lakes) {
                     const dx = x - lake.x;
                     const dy = y - lake.y;
                     let distance;
-                    
+
                     if (lake.shape === 'oval') {
-                        // Oval shape - stretch in one direction
-                        const stretchFactor = 0.7 + Math.random() * 0.6; // 0.7 to 1.3
+                        const stretchFactor = 0.7 + Math.random() * 0.6;
                         const angle = Math.random() * Math.PI * 2;
                         const dxStretched = dx * Math.cos(angle) + dy * Math.sin(angle);
                         const dyStretched = -dx * Math.sin(angle) + dy * Math.cos(angle);
                         distance = Math.sqrt((dxStretched / stretchFactor) ** 2 + (dyStretched * stretchFactor) ** 2);
                     } else {
-                        // Irregular shape - add some randomness
                         const baseDistance = Math.sqrt(dx * dx + dy * dy);
-                        const irregularity = Math.random() * 0.4 + 0.8; // 0.8 to 1.2
+                        const irregularity = Math.random() * 0.4 + 0.8;
                         distance = baseDistance * irregularity;
                     }
-                    
+
                     if (distance <= lake.baseSize) {
                         isLake = true;
                         break;
                     }
                 }
-                
+
                 // Natural terrain colors based on elevation
                 let color;
-                
                 if (isLake) {
-                    // Lake - bright light blue
                     color = `rgb(135, 206, 235)`; // Sky blue
                 } else if (height > 0.9) {
-                    // Snow peaks - white
                     color = `rgb(255, 255, 255)`;
                 } else if (height > 0.8) {
-                    // High alpine - light gray
                     color = `rgb(200, 200, 200)`;
                 } else if (height > 0.7) {
-                    // Alpine zone - tan/brown
                     color = `rgb(180, 160, 140)`;
                 } else if (height > 0.6) {
-                    // Subalpine - light brown
                     color = `rgb(160, 140, 120)`;
                 } else if (height > 0.5) {
-                    // Upper forest - medium brown
                     color = `rgb(140, 120, 100)`;
                 } else if (height > 0.4) {
-                    // Mid forest - dark brown
                     color = `rgb(120, 100, 80)`;
                 } else if (height > 0.3) {
-                    // Lower forest - very dark brown
                     color = `rgb(100, 80, 60)`;
                 } else if (height > 0.2) {
-                    // Foothills - dark green-brown
                     color = `rgb(80, 100, 60)`;
                 } else if (height > 0.1) {
-                    // Lowlands - medium green
                     color = `rgb(60, 120, 60)`;
                 } else {
-                    // Valley floor - light green
                     color = `rgb(100, 140, 100)`;
                 }
-                
-                // Draw square pixel with exact boundaries
+
+                // Draw the isometric tile (a rhombus)
                 this.ctx.fillStyle = color;
-                this.ctx.fillRect(screenX, screenY, pixelWidth, pixelHeight);
+                this.ctx.beginPath();
+                this.ctx.moveTo(screenX, screenY);
+                this.ctx.lineTo(screenX + tileWidth / 2, screenY + tileHeight / 2);
+                this.ctx.lineTo(screenX, screenY + tileHeight);
+                this.ctx.lineTo(screenX - tileWidth / 2, screenY + tileHeight / 2);
+                this.ctx.closePath();
+                this.ctx.fill();
             }
         }
     }
     
     drawLakes() {
         console.log(`Drawing ${this.lakes.length} lakes...`);
-        console.log(`Lakes array in drawLakes:`, this.lakes);
-        console.log(`Canvas dimensions: ${this.width}x${this.height}`);
-        
+        const tileWidth = 10;
+        const tileHeight = tileWidth * 0.5;
+        const centerX = this.width / 2;
+        const centerY = this.height / 4;
+
         this.lakes.forEach((lake, index) => {
-            const x = lake.x * (this.width / 200);
-            const y = lake.y * (this.height / 200);
-            
-            console.log(`Drawing lake ${index + 1}: ${lake.name} at screen position (${x}, ${y}) from terrain position (${lake.x}, ${lake.y})`);
-            
+            const isoX = (lake.x - lake.y) * tileWidth / 2;
+            const isoY = (lake.x + lake.y) * tileHeight / 2;
+            const screenX = centerX + isoX;
+            const screenY = centerY + isoY;
+
+            console.log(`Drawing lake ${index + 1}: ${lake.name} at screen position (${screenX}, ${screenY}) from terrain position (${lake.x}, ${lake.y})`);
+
             // Draw lake name
             this.ctx.fillStyle = '#0066cc';
             this.ctx.font = 'bold 10px Arial';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(lake.name, x, y);
+            this.ctx.fillText(lake.name, screenX, screenY);
         });
     }
-    
+
     drawCampsites() {
+        const tileWidth = 10;
+        const tileHeight = tileWidth * 0.5;
+        const centerX = this.width / 2;
+        const centerY = this.height / 4;
+
         this.campsites.forEach(campsite => {
-            const x = campsite.x * (this.width / 200);
-            const y = campsite.y * (this.height / 200);
-            
+            const height = this.getTerrainHeightAt(campsite.x, campsite.y);
+            const isoX = (campsite.x - campsite.y) * tileWidth / 2;
+            const isoY = (campsite.x + campsite.y) * tileHeight / 2;
+            const screenX = centerX + isoX;
+            const screenY = centerY + isoY - height * 20;
+
             // Draw campsite marker
             this.ctx.fillStyle = '#ff6b6b';
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 8, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, 8, 0, Math.PI * 2);
             this.ctx.fill();
-            
+
             // Draw campsite border
             this.ctx.strokeStyle = '#fff';
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
-            
+
             // Draw campsite name
             this.ctx.fillStyle = '#333';
             this.ctx.font = '12px Arial';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(campsite.name, x, y + 20);
+            this.ctx.fillText(campsite.name, screenX, screenY + 20);
         });
     }
-    
+
     drawRoutes() {
         if (!window.game) {
             console.warn('Game not available for route drawing');
             return;
         }
-        
+
         const routes = window.game.getRouteManager().getRoutes();
         console.log(`Drawing ${routes.length} routes on mountain`);
-        
+
         if (routes.length === 0) {
             console.log('No routes to draw');
             return;
         }
-        
+
+        const tileWidth = 10;
+        const tileHeight = tileWidth * 0.5;
+        const centerX = this.width / 2;
+        const centerY = this.height / 4;
+
         routes.forEach((route, index) => {
             const fromCampsite = this.campsites.find(c => c.name === route.from);
             const toCampsite = this.campsites.find(c => c.name === route.to);
-            
+
             if (fromCampsite && toCampsite) {
                 console.log(`Drawing route ${index + 1}: ${route.from} -> ${route.to} (${route.difficulty})`);
-                
-                const fromX = fromCampsite.x * (this.width / 200);
-                const fromY = fromCampsite.y * (this.height / 200);
-                const toX = toCampsite.x * (this.width / 200);
-                const toY = toCampsite.y * (this.height / 200);
-                
+
+                const fromHeight = this.getTerrainHeightAt(fromCampsite.x, fromCampsite.y);
+                const fromIsoX = (fromCampsite.x - fromCampsite.y) * tileWidth / 2;
+                const fromIsoY = (fromCampsite.x + fromCampsite.y) * tileHeight / 2;
+                const fromScreenX = centerX + fromIsoX;
+                const fromScreenY = centerY + fromIsoY - fromHeight * 20;
+
+                const toHeight = this.getTerrainHeightAt(toCampsite.x, toCampsite.y);
+                const toIsoX = (toCampsite.x - toCampsite.y) * tileWidth / 2;
+                const toIsoY = (toCampsite.x + toCampsite.y) * tileHeight / 2;
+                const toScreenX = centerX + toIsoX;
+                const toScreenY = centerY + toIsoY - toHeight * 20;
+
                 // Use A* pathfinding to avoid steep terrain
-                const pathPoints = this.generateAStarPath(fromX, fromY, toX, toY);
-                
+                const pathPoints = this.generateAStarPath(fromCampsite.x, fromCampsite.y, toCampsite.x, toCampsite.y);
+
                 // Draw route path
                 this.ctx.strokeStyle = this.getRouteColor(route.difficulty);
                 this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
-                
+
                 if (pathPoints.length > 0) {
-                    this.ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+                    const startHeight = this.getTerrainHeightAt(pathPoints[0].x, pathPoints[0].y);
+                    const startIsoX = (pathPoints[0].x - pathPoints[0].y) * tileWidth / 2;
+                    const startIsoY = (pathPoints[0].x + pathPoints[0].y) * tileHeight / 2;
+                    this.ctx.moveTo(centerX + startIsoX, centerY + startIsoY - startHeight * 20);
+
                     for (let i = 1; i < pathPoints.length; i++) {
-                        this.ctx.lineTo(pathPoints[i].x, pathPoints[i].y);
+                        const height = this.getTerrainHeightAt(pathPoints[i].x, pathPoints[i].y);
+                        const isoX = (pathPoints[i].x - pathPoints[i].y) * tileWidth / 2;
+                        const isoY = (pathPoints[i].x + pathPoints[i].y) * tileHeight / 2;
+                        this.ctx.lineTo(centerX + isoX, centerY + isoY - height * 20);
                     }
                 } else {
                     // Fallback to straight line if path generation fails
-                    this.ctx.moveTo(fromX, fromY);
-                    this.ctx.lineTo(toX, toY);
+                    this.ctx.moveTo(fromScreenX, fromScreenY);
+                    this.ctx.lineTo(toScreenX, toScreenY);
                 }
-                
+
                 this.ctx.stroke();
-                
+
                 // Draw route label
                 this.ctx.fillStyle = '#333';
                 this.ctx.font = 'bold 10px Arial';
                 this.ctx.textAlign = 'center';
-                const midX = (fromX + toX) / 2;
-                const midY = (fromY + toY) / 2;
-                
+                const midX = (fromScreenX + toScreenX) / 2;
+                const midY = (fromScreenY + toScreenY) / 2;
+
                 // Draw route name
                 if (route.name) {
                     this.ctx.fillText(route.name, midX, midY - 15);
                 }
-                
+
                 // Draw distance
                 this.ctx.font = '9px Arial';
                 this.ctx.fillText(`${route.distance}mi`, midX, midY - 2);
@@ -1018,91 +1045,111 @@ class MountainGenerator {
         if (!this.dayHikes || this.dayHikes.length === 0) {
             return;
         }
-        
+
         console.log(`Drawing ${this.dayHikes.length} day hikes...`);
-        
+
+        const tileWidth = 10;
+        const tileHeight = tileWidth * 0.5;
+        const centerX = this.width / 2;
+        const centerY = this.height / 4;
+
         this.dayHikes.forEach((hike, index) => {
-            const fromX = hike.from.x * (this.width / 200);
-            const fromY = hike.from.y * (this.height / 200);
-            const toX = hike.to.x * (this.width / 200);
-            const toY = hike.to.y * (this.height / 200);
-            
+            const fromHeight = this.getTerrainHeightAt(hike.from.x, hike.from.y);
+            const fromIsoX = (hike.from.x - hike.from.y) * tileWidth / 2;
+            const fromIsoY = (hike.from.x + hike.from.y) * tileHeight / 2;
+            const fromScreenX = centerX + fromIsoX;
+            const fromScreenY = centerY + fromIsoY - fromHeight * 20;
+
+            const toHeight = this.getTerrainHeightAt(hike.to.x, hike.to.y);
+            const toIsoX = (hike.to.x - hike.to.y) * tileWidth / 2;
+            const toIsoY = (hike.to.x + hike.to.y) * tileHeight / 2;
+            const toScreenX = centerX + toIsoX;
+            const toScreenY = centerY + toIsoY - toHeight * 20;
+
             console.log(`Drawing day hike ${index + 1}: ${hike.name} (${hike.type})`);
-            
+
             // Set up dotted line style
             this.ctx.setLineDash([5, 5]); // 5px dash, 5px gap
             this.ctx.lineCap = 'round';
-            
+
             // Choose color based on hike type
             if (hike.type === 'lake') {
                 this.ctx.strokeStyle = '#0066cc'; // Blue for lake hikes
             } else {
                 this.ctx.strokeStyle = '#8b4513'; // Brown for peak hikes
             }
-            
+
             this.ctx.lineWidth = 2;
             this.ctx.beginPath();
-            this.ctx.moveTo(fromX, fromY);
-            this.ctx.lineTo(toX, toY);
+            this.ctx.moveTo(fromScreenX, fromScreenY);
+            this.ctx.lineTo(toScreenX, toScreenY);
             this.ctx.stroke();
-            
+
             // Reset line dash
             this.ctx.setLineDash([]);
-            
+
             // Draw hike label
             this.ctx.fillStyle = '#333';
             this.ctx.font = 'italic 9px Arial';
             this.ctx.textAlign = 'center';
-            const midX = (fromX + toX) / 2;
-            const midY = (fromY + toY) / 2;
-            
+            const midX = (fromScreenX + toScreenX) / 2;
+            const midY = (fromScreenY + toScreenY) / 2;
+
             // Draw hike name
             this.ctx.fillText(hike.name, midX, midY - 5);
-            
+
             // Draw distance
             const distanceInMiles = Math.round(hike.distance * 0.019 * 3 * 10) / 10; // Convert to miles
             this.ctx.font = '8px Arial';
             this.ctx.fillText(`${distanceInMiles}mi`, midX, midY + 5);
         });
     }
-    
+
     drawPeaks() {
         if (!this.peaks || this.peaks.length === 0) {
             return;
         }
-        
+
         console.log(`Drawing ${this.peaks.length} mountain peaks...`);
-        
+
+        const tileWidth = 10;
+        const tileHeight = tileWidth * 0.5;
+        const centerX = this.width / 2;
+        const centerY = this.height / 4;
+
         this.peaks.forEach((peak, index) => {
-            const x = peak.x * (this.width / 200);
-            const y = peak.y * (this.height / 200);
-            
-            console.log(`Drawing peak ${index + 1}: ${peak.name} at (${x}, ${y})`);
-            
+            const height = this.getTerrainHeightAt(peak.x, peak.y);
+            const isoX = (peak.x - peak.y) * tileWidth / 2;
+            const isoY = (peak.x + peak.y) * tileHeight / 2;
+            const screenX = centerX + isoX;
+            const screenY = centerY + isoY - height * 20;
+
+            console.log(`Drawing peak ${index + 1}: ${peak.name} at (${screenX}, ${screenY})`);
+
             // Draw peak marker (triangle shape)
             this.ctx.fillStyle = '#8b4513'; // Brown color for peaks
             this.ctx.beginPath();
-            this.ctx.moveTo(x, y - 10);
-            this.ctx.lineTo(x - 8, y + 8);
-            this.ctx.lineTo(x + 8, y + 8);
+            this.ctx.moveTo(screenX, screenY - 10);
+            this.ctx.lineTo(screenX - 8, screenY + 8);
+            this.ctx.lineTo(screenX + 8, screenY + 8);
             this.ctx.closePath();
             this.ctx.fill();
-            
+
             // Draw peak border
             this.ctx.strokeStyle = '#fff';
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
-            
+
             // Draw peak name
             this.ctx.fillStyle = '#333';
             this.ctx.font = 'bold 10px Arial';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(peak.name, x, y + 25);
-            
+            this.ctx.fillText(peak.name, screenX, screenY + 25);
+
             // Draw elevation
             const elevation = Math.round(peak.height * 8000 + 2000);
             this.ctx.font = '9px Arial';
-            this.ctx.fillText(`${elevation}ft`, x, y + 35);
+            this.ctx.fillText(`${elevation}ft`, screenX, screenY + 35);
         });
     }
     
